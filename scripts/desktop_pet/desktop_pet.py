@@ -102,6 +102,10 @@ AVATAR_MIN_WIDTH = 120
 AVATAR_MAX_WIDTH = 600
 AVATAR_SCROLL_STEP = 20  # 滾輪每格縮放的像素量
 _AVATAR_RESIZE_DEBOUNCE_MS = 60  # 滾輪停下來這麼久才真的重繪，避免連續滾動時每格都重繪造成卡頓
+
+# 角色說話語言的常見選項，右鍵選單快速切換用；不在清單裡的語言走選單裡的
+# 「自訂...」，不是只能從這幾個裡面選
+SPEECH_LANGUAGE_PRESETS = ["日文", "中文", "英文", "韓文"]
 MOUTH_HOP_MS = 90  # 音量驅動開合嘴的取樣間隔，不是真的音素對齊
 MOUTH_THRESHOLD_RATIO = 0.3  # 這段音量超過整句最大音量的這個比例才算「張嘴」
 DRAG_THRESHOLD_PX = 3  # 按下去移動超過這個距離才算拖曳，不然當成單純點擊
@@ -379,7 +383,21 @@ class CharacterWindow:
             command=self._on_stt_provider_change,
         )
         self._context_menu.add_cascade(label="語音辨識", menu=stt_menu)
-        self._context_menu.add_command(label="角色說話語言...", command=self._prompt_speech_language)
+
+        self._speech_language_var = tk.StringVar(value=chat.CHARACTER_SPEECH_LANGUAGE)
+        language_menu = tk.Menu(
+            self._context_menu, tearoff=False, bg=COLOR_PANEL, fg=COLOR_TEXT,
+            activebackground=COLOR_ACCENT, activeforeground=COLOR_TEXT,
+        )
+        for lang in SPEECH_LANGUAGE_PRESETS:
+            language_menu.add_radiobutton(
+                label=lang, variable=self._speech_language_var, value=lang,
+                command=self._on_speech_language_preset_change,
+            )
+        language_menu.add_separator()
+        # 常見選項之外的語言（或想輸入更精確的說法）走這個，開文字輸入框
+        language_menu.add_command(label="自訂...", command=self._prompt_speech_language)
+        self._context_menu.add_cascade(label="角色說話語言", menu=language_menu)
 
         self._context_menu.add_separator()
         self._context_menu.add_command(label="結束", command=self._on_close)
@@ -672,11 +690,16 @@ class CharacterWindow:
         stt.STT_PROVIDER = self._stt_provider_var.get()
         _save_prefs(stt_provider=stt.STT_PROVIDER)
 
+    def _on_speech_language_preset_change(self) -> None:
+        """角色說話語言子選單裡的常見選項被點擊：同上，改 chat.py 的模組變數。"""
+        chat.CHARACTER_SPEECH_LANGUAGE = self._speech_language_var.get()
+        _save_prefs(character_speech_language=chat.CHARACTER_SPEECH_LANGUAGE)
+
     def _prompt_speech_language(self) -> None:
-        """右鍵選單「角色說話語言...」：語言是開放式文字（不是本地/雲端這種
-        二選一），所以用文字輸入框，不是子選單。chat.py 的提示詞是現場組字串
-        （見 chat.py 的 _build_*_output_format_instructions 說明），改完
-        chat.CHARACTER_SPEECH_LANGUAGE 下一句對話就會生效，不用重開程式。"""
+        """角色說話語言子選單裡的「自訂...」：常見選項之外的語言（或想輸入更
+        精確的說法）用文字輸入框，不是每種語言都硬塞進子選單。chat.py 的提示詞
+        是現場組字串（見 chat.py 的 _build_*_output_format_instructions 說明），
+        改完 chat.CHARACTER_SPEECH_LANGUAGE 下一句對話就會生效，不用重開程式。"""
         dialog = tk.Toplevel(self.root)
         dialog.title("角色說話語言")
         dialog.configure(bg=COLOR_PANEL)
@@ -706,6 +729,7 @@ class CharacterWindow:
             new_language = entry.get().strip()
             if new_language:
                 chat.CHARACTER_SPEECH_LANGUAGE = new_language
+                self._speech_language_var.set(new_language)  # 子選單的勾選狀態跟著同步
                 _save_prefs(character_speech_language=new_language)
             dialog.destroy()
 
