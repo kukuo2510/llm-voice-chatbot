@@ -97,7 +97,10 @@ CABLE_DEVICE_NAME_HINT = "CABLE Input"
 # 立繪素材放在 characters/<角色>/avatar/，跟角色人設、語音設定同一套規則；
 # 要換角色，把這裡的 "sakiko" 換成你自己的角色資料夾名稱
 ASSETS_DIR = Path(__file__).resolve().parents[2] / "characters" / "sakiko" / "avatar"
-AVATAR_DISPLAY_WIDTH = int(os.environ.get("DESKTOP_PET_AVATAR_WIDTH", "280"))  # 立繪顯示寬度（像素），高度依素材比例算出來
+AVATAR_DISPLAY_WIDTH = int(os.environ.get("DESKTOP_PET_AVATAR_WIDTH", "280"))  # 立繪顯示寬度（像素）預設值，高度依素材比例算出來；可用滑鼠滾輪即時縮放（見 _on_avatar_scroll），縮放後會記住，優先於這個預設值
+AVATAR_MIN_WIDTH = 120
+AVATAR_MAX_WIDTH = 600
+AVATAR_SCROLL_STEP = 20  # 滾輪每格縮放的像素量
 MOUTH_HOP_MS = 90  # 音量驅動開合嘴的取樣間隔，不是真的音素對齊
 MOUTH_THRESHOLD_RATIO = 0.3  # 這段音量超過整句最大音量的這個比例才算「張嘴」
 DRAG_THRESHOLD_PX = 3  # 按下去移動超過這個距離才算拖曳，不然當成單純點擊
@@ -274,14 +277,18 @@ class CharacterWindow:
         self._input_popup: Optional[tk.Toplevel] = None
         self._input_entry: Optional[tk.Entry] = None
 
-        self.frame_closed, self.frame_open, avatar_height = _load_avatar_frames()
+        prefs = _load_prefs()
+
+        # 立繪寬度：有滾輪縮放記住的偏好就用那個，沒有就用 .env 的預設值
+        self._avatar_width = prefs.get("avatar_width", AVATAR_DISPLAY_WIDTH)
+        self.frame_closed, self.frame_open, avatar_height = _load_avatar_frames(self._avatar_width)
 
         # 無邊框、置頂、色鍵去背——畫面上真的只剩角色本人
         root.overrideredirect(True)
         root.attributes("-topmost", True)
         root.configure(bg=MAGIC_TRANSPARENT_COLOR)
         root.wm_attributes("-transparentcolor", MAGIC_TRANSPARENT_COLOR)
-        root.geometry(f"{AVATAR_DISPLAY_WIDTH}x{avatar_height}+120+120")
+        root.geometry(f"{self._avatar_width}x{avatar_height}+120+120")
 
         self.avatar_label = tk.Label(
             root, image=self.frame_closed, bg=MAGIC_TRANSPARENT_COLOR, bd=0, highlightthickness=0,
@@ -290,13 +297,11 @@ class CharacterWindow:
 
         self.dialogue_var = tk.StringVar(value="")
         self.dialogue_label = tk.Label(
-            root, textvariable=self.dialogue_var, wraplength=AVATAR_DISPLAY_WIDTH - 24,
+            root, textvariable=self.dialogue_var, wraplength=self._avatar_width - 24,
             justify="left", font=("Microsoft JhengHei", 12), fg=COLOR_TEXT, bg=COLOR_PANEL,
             padx=10, pady=6,
         )
         self._update_dialogue_visibility()
-
-        prefs = _load_prefs()
 
         # 螢幕讀取主動搭話：有記住的偏好就直接用，沒有的話先當關閉、等視窗
         # 顯示穩定後再跳出詢問視窗（見 _prompt_screen_watch_choice）
@@ -361,6 +366,7 @@ class CharacterWindow:
             widget.bind("<B1-Motion>", self._on_avatar_motion)
             widget.bind("<ButtonRelease-1>", self._on_avatar_release)
             widget.bind("<Button-3>", self._on_avatar_right_click)
+            widget.bind("<MouseWheel>", self._on_avatar_scroll)  # 滾輪縮放立繪大小
 
         self._task_queue: "queue.Queue[tuple[str, object]]" = queue.Queue()
         self.root.after(50, self._poll_queue)
@@ -401,6 +407,24 @@ class CharacterWindow:
 
     def _on_avatar_right_click(self, event: tk.Event) -> None:
         self._context_menu.tk_popup(event.x_root, event.y_root)
+
+    def _on_avatar_scroll(self, event: tk.Event) -> None:
+        """滾輪縮放立繪大小：往上滾放大、往下滾縮小，範圍限制在
+        AVATAR_MIN_WIDTH~AVATAR_MAX_WIDTH。縮放後的大小會記住，下次啟動沿用，
+        跟螢幕讀取/provider 那些偏好存在同一個檔案。"""
+        direction = 1 if event.delta > 0 else -1
+        new_width = max(AVATAR_MIN_WIDTH, min(AVATAR_MAX_WIDTH, self._avatar_width + direction * AVATAR_SCROLL_STEP))
+        if new_width == self._avatar_width:
+            return
+        self._avatar_width = new_width
+
+        x, y = self.root.winfo_x(), self.root.winfo_y()
+        self.frame_closed, self.frame_open, avatar_height = _load_avatar_frames(self._avatar_width)
+        self.avatar_label.configure(image=self.frame_closed)
+        self.root.geometry(f"{self._avatar_width}x{avatar_height}+{x}+{y}")
+        self.dialogue_label.configure(wraplength=self._avatar_width - 24)
+        self._position_input_popup()
+        _save_prefs(avatar_width=self._avatar_width)
 
     # ---------- 彈出輸入列 ----------
 

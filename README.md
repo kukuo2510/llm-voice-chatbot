@@ -12,7 +12,7 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 
 - 打字或按住熱鍵語音輸入，角色用語音回覆＋文字翻譯＋語氣標籤（開心/嚴肅/猶豫…），TTS 依語氣切換聲音表現
 - 角色說話的語言可設定（`CHARACTER_SPEECH_LANGUAGE`，預設日文），換角色時不用改程式碼
-- 桌面上飄浮的透明立繪視窗（「桌寵」），無邊框、只有角色本人
+- 桌面上飄浮的透明立繪視窗（「桌寵」），無邊框、只有角色本人；滾滑鼠滾輪可即時縮放大小
 - 對話用的 LLM/STT 可以是本地（Ollama/SenseVoice，免費）或雲端（OpenAI），桌寵右鍵選單隨時可切換，不用改 `.env`、不用重開程式
 - 選用功能：桌寵會定期看一眼螢幕、自己決定要不要主動找你聊天（見下方架構圖）
 
