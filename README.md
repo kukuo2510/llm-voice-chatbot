@@ -8,6 +8,15 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 
 ---
 
+## 這個平台做什麼 / What it does
+
+- 打字或按住熱鍵語音輸入，角色用日文回覆＋中文翻譯＋語氣標籤（開心/嚴肅/猶豫…），TTS 依語氣切換聲音表現
+- 兩種前端：桌面上飄浮的透明立繪視窗（「桌寵」），或 Discord bot（文字/語音頻道皆可）
+- 對話用的 LLM/STT 可以是本地（Ollama/SenseVoice，免費）或雲端（OpenAI），`.env` 明確選擇
+- 選用功能：桌寵會定期看一眼螢幕、自己決定要不要主動找你聊天（見下方架構圖／設計決策）
+
+---
+
 ## 架構 / Architecture
 
 ```mermaid
