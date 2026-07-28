@@ -337,6 +337,8 @@ class CharacterWindow:
             chat.LLM_PROVIDER = prefs["llm_provider"]
         if "stt_provider" in prefs:
             stt.STT_PROVIDER = prefs["stt_provider"]
+        if "character_speech_language" in prefs:
+            chat.CHARACTER_SPEECH_LANGUAGE = prefs["character_speech_language"]
         self._llm_provider_var = tk.StringVar(value=chat.LLM_PROVIDER)
         self._stt_provider_var = tk.StringVar(value=stt.STT_PROVIDER)
 
@@ -377,6 +379,7 @@ class CharacterWindow:
             command=self._on_stt_provider_change,
         )
         self._context_menu.add_cascade(label="語音辨識", menu=stt_menu)
+        self._context_menu.add_command(label="角色說話語言...", command=self._prompt_speech_language)
 
         self._context_menu.add_separator()
         self._context_menu.add_command(label="結束", command=self._on_close)
@@ -668,6 +671,60 @@ class CharacterWindow:
         """語音辨識子選單被點擊：同上，改 stt.py 的模組變數。"""
         stt.STT_PROVIDER = self._stt_provider_var.get()
         _save_prefs(stt_provider=stt.STT_PROVIDER)
+
+    def _prompt_speech_language(self) -> None:
+        """右鍵選單「角色說話語言...」：語言是開放式文字（不是本地/雲端這種
+        二選一），所以用文字輸入框，不是子選單。chat.py 的提示詞是現場組字串
+        （見 chat.py 的 _build_*_output_format_instructions 說明），改完
+        chat.CHARACTER_SPEECH_LANGUAGE 下一句對話就會生效，不用重開程式。"""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("角色說話語言")
+        dialog.configure(bg=COLOR_PANEL)
+        dialog.resizable(False, False)
+        dialog.attributes("-topmost", True)
+        dialog.transient(self.root)
+
+        tk.Label(
+            dialog, text="角色開口說話要用什麼語言？（直接輸入語言名稱，例如：日文／英文／韓文）",
+            justify="left", wraplength=320, font=("Microsoft JhengHei", 11),
+            fg=COLOR_TEXT, bg=COLOR_PANEL, padx=16, pady=12,
+        ).pack()
+
+        entry = tk.Entry(
+            dialog, font=("Microsoft JhengHei", 13), bg=COLOR_BG, fg=COLOR_TEXT,
+            insertbackground=COLOR_TEXT, relief="flat", width=20,
+        )
+        entry.insert(0, chat.CHARACTER_SPEECH_LANGUAGE)
+        entry.select_range(0, "end")
+        entry.pack(padx=16, pady=(0, 10))
+        entry.focus_force()
+
+        button_row = tk.Frame(dialog, bg=COLOR_PANEL)
+        button_row.pack(padx=16, pady=(0, 14))
+
+        def _confirm(event: tk.Event = None) -> None:
+            new_language = entry.get().strip()
+            if new_language:
+                chat.CHARACTER_SPEECH_LANGUAGE = new_language
+                _save_prefs(character_speech_language=new_language)
+            dialog.destroy()
+
+        entry.bind("<Return>", _confirm)
+        entry.bind("<Escape>", lambda e: dialog.destroy())
+
+        tk.Button(
+            button_row, text="確定", command=_confirm, bg=COLOR_ACCENT, fg=COLOR_TEXT,
+            activebackground=COLOR_ACCENT_HOVER, relief="flat", padx=14, pady=4,
+        ).pack(side="left", padx=(0, 8))
+        tk.Button(
+            button_row, text="取消", command=dialog.destroy, bg=COLOR_BG, fg=COLOR_TEXT,
+            activebackground=COLOR_PANEL, relief="flat", padx=14, pady=4,
+        ).pack(side="left")
+
+        dialog.update_idletasks()
+        x = self.root.winfo_x()
+        y = self.root.winfo_y() + self.root.winfo_height() + 8
+        dialog.geometry(f"+{x}+{y}")
 
     def _prompt_screen_watch_choice(self) -> None:
         """程式啟動、還沒有「記住的」偏好時跳出來問一次，不用去改 .env——

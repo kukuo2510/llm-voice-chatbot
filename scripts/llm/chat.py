@@ -23,7 +23,7 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ValidationError
 
@@ -50,7 +50,14 @@ TONE_OPTIONS = ["neutral", "happy", "serious", "hesitant", "intense"]
 # 不用碰這支程式碼；要換角色，把這裡的 "sakiko" 換成你自己的角色資料夾名稱
 PERSONA_PATH = Path(__file__).resolve().parents[2] / "characters" / "sakiko" / "persona.md"
 
-_OUTPUT_FORMAT_INSTRUCTIONS = f"""
+# 這幾份提示詞刻意寫成函式、每次呼叫才組字串，不是預先組好的常數——這樣
+# CHARACTER_SPEECH_LANGUAGE 在執行中被改掉（例如桌寵右鍵選單切換）時，
+# 下一次呼叫就會用新語言，不用重開程式。如果寫成模組載入時就固定的字串，
+# 之後改這個變數也不會生效，因為字串早就內插、烤死在裡面了。
+
+
+def _build_output_format_instructions() -> str:
+    return f"""
 使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
   "reply_speech": "用{CHARACTER_SPEECH_LANGUAGE}，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的{CHARACTER_SPEECH_LANGUAGE}，不要中英日等語言夾雜",
@@ -59,7 +66,9 @@ _OUTPUT_FORMAT_INSTRUCTIONS = f"""
 }}
 """
 
-_SPEECH_ONLY_OUTPUT_FORMAT_INSTRUCTIONS = f"""
+
+def _build_speech_only_output_format_instructions() -> str:
+    return f"""
 使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
   "reply_speech": "用{CHARACTER_SPEECH_LANGUAGE}，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的{CHARACTER_SPEECH_LANGUAGE}，不要中英日等語言夾雜",
@@ -67,10 +76,12 @@ _SPEECH_ONLY_OUTPUT_FORMAT_INSTRUCTIONS = f"""
 }}
 """
 
-# 下面這份翻譯提示詞的第一段（語言、用詞）是通用邏輯，換角色/換語言都適用；
-# 但「ですわ／ますの語尾」那一段是範例角色（豐川祥子）的專屬說話習慣，換成
-# 自己的角色或語言時，這段連同下面的專有名詞讀音對照都要換成你自己的設定
-_ZH_TRANSLATE_SYSTEM_PROMPT = f"""你是專業的{CHARACTER_SPEECH_LANGUAGE}翻譯，把使用者提供的{CHARACTER_SPEECH_LANGUAGE}句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣
+
+def _build_zh_translate_system_prompt() -> str:
+    # 第一段（語言、用詞）是通用邏輯，換角色/換語言都適用；但「ですわ／ますの
+    # 語尾」那一段是範例角色（豐川祥子）的專屬說話習慣，換成自己的角色或語言時，
+    # 這段連同下面的專有名詞讀音對照都要換成你自己的設定
+    return f"""你是專業的{CHARACTER_SPEECH_LANGUAGE}翻譯，把使用者提供的{CHARACTER_SPEECH_LANGUAGE}句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣
 （例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。
 
 原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，
@@ -87,10 +98,6 @@ Morfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「�
 
 def _load_persona_text() -> str:
     return PERSONA_PATH.read_text(encoding="utf-8").strip()
-
-
-DEFAULT_SYSTEM_PROMPT = _load_persona_text() + "\n" + _OUTPUT_FORMAT_INSTRUCTIONS
-DEFAULT_JA_SYSTEM_PROMPT = _load_persona_text() + "\n" + _SPEECH_ONLY_OUTPUT_FORMAT_INSTRUCTIONS
 
 
 class SakikoReply(BaseModel):
@@ -206,10 +213,13 @@ def _call_llm(messages: list[dict], *, json_format: bool, timeout: int = 120) ->
     return _call_ollama(messages, json_format=json_format, timeout=timeout)
 
 
-def chat_ja(user_message: str, system_prompt: str = DEFAULT_JA_SYSTEM_PROMPT) -> SakikoReplyJa:
+def chat_ja(user_message: str, system_prompt: Optional[str] = None) -> SakikoReplyJa:
     """只生成角色語言的回覆＋語氣標籤（給 TTS 用），不含中文翻譯，走最短路徑。
     函式名沿用 chat_ja 是歷史命名，實際語言由 CHARACTER_SPEECH_LANGUAGE 決定，
-    不是寫死日文。"""
+    不是寫死日文。system_prompt 沒指定的話現場組（見 _build_speech_only_
+    output_format_instructions 的說明），確保吃到當下最新的語言設定。"""
+    if system_prompt is None:
+        system_prompt = _load_persona_text() + "\n" + _build_speech_only_output_format_instructions()
     raw_content = _call_llm(
         [
             {"role": "system", "content": system_prompt},
@@ -228,7 +238,7 @@ def translate_zh(reply_speech: str) -> str:
     """把角色說的話翻譯成台灣用語的繁體中文，給使用者看（不在 TTS 的關鍵路徑上，可跟語音生成平行跑）"""
     raw_content = _call_llm(
         [
-            {"role": "system", "content": _ZH_TRANSLATE_SYSTEM_PROMPT},
+            {"role": "system", "content": _build_zh_translate_system_prompt()},
             {"role": "user", "content": reply_speech},
         ],
         json_format=False,
@@ -236,13 +246,15 @@ def translate_zh(reply_speech: str) -> str:
     return _fix_tw_terms(raw_content.strip().strip('"'))
 
 
-def chat(user_message: str, system_prompt: str = DEFAULT_SYSTEM_PROMPT) -> SakikoReply:
+def chat(user_message: str, system_prompt: Optional[str] = None) -> SakikoReply:
     """呼叫本地 LLM，回傳結構化結果：reply_speech（餵 TTS）、reply_zh（顯示給使用者）、tone（語氣標籤）
 
     內部就是 chat_ja + translate_zh 的合併版本，兩次呼叫依序執行。
     在意延遲的呼叫端（例如 desktop_pet.py）應該直接分開呼叫 chat_ja / translate_zh，
     讓語音生成跟翻譯平行跑，而不是用這支函式。
     """
+    if system_prompt is None:
+        system_prompt = _load_persona_text() + "\n" + _build_output_format_instructions()
     reply_speech = chat_ja(user_message, system_prompt=system_prompt)
     reply_zh = translate_zh(reply_speech.reply_speech)
     return SakikoReply(reply_speech=reply_speech.reply_speech, reply_zh=reply_zh, tone=reply_speech.tone)
