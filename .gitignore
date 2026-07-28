@@ -20,7 +20,7 @@ outputs/
 *.wav
 
 # === 桌寵本機偏好設定（每台機器自己的選擇，不共用）===
-scripts/desktop_pet/.screen_watch_pref.json
+scripts/desktop_pet/.pet_prefs.json
 
 # === 模型權重與大型二進位檔（保險起見依副檔名再擋一層）===
 *.ckpt

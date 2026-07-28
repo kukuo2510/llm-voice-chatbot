@@ -67,9 +67,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "gpt_sovits"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "llm"))
 
+import chat  # noqa: E402  — 這裡特意連模組本身一起 import（不是只挑函式），
+# 右鍵選單切換本地/雲端時要直接改 chat.LLM_PROVIDER 這個模組層級變數，
+# chat_ja/translate_zh 每次呼叫都讀當下的值，不用重開程式就能生效
 from chat import chat_ja, translate_zh  # noqa: E402
 from tts_infer import generate  # noqa: E402
 from tts_server import is_server_ready, start_server  # noqa: E402
+import stt  # noqa: E402  — 同上，切換 STT 本地/雲端要改 stt.STT_PROVIDER
 from stt import PushToTalkRecorder  # noqa: E402
 from screen_watch import look_at_screen  # noqa: E402
 
@@ -101,10 +105,11 @@ DRAG_THRESHOLD_PX = 3  # 按下去移動超過這個距離才算拖曳，不然�
 # 螢幕讀取主動搭話（規劃見 TTS通用平台_專案規劃.md 10.5）：開關不是靠改 .env
 # 這種要開檔案編輯的方式決定（試用門檻太高，等於變相勸退），而是程式啟動時
 # 跳出詢問視窗、加上右鍵選單隨時可切換——「記不記住這次選擇」才是使用者
-# 真正要做的決定，記住的話存進下面這個本機小檔案，不記住的話下次開程式
-# 還是會重新問一次
+# 真正要做的決定。同一個理由，對話/語音辨識要走本地還是雲端，也一併做成
+# 右鍵選單可以直接切換，不用進 .env 改——記住的偏好統一存進下面這個本機
+# 小檔案，不記住的話下次開程式還是照 .env 的預設值
 SCREEN_WATCH_INTERVAL_SEC = int(os.environ.get("SCREEN_WATCH_INTERVAL_SEC", "20"))
-_SCREEN_WATCH_STATE_FILE = Path(__file__).resolve().parent / ".screen_watch_pref.json"
+_PET_PREFS_FILE = Path(__file__).resolve().parent / ".pet_prefs.json"
 _SCREEN_WATCH_PROMPT_TEMPLATE = (
     "（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：{caption}。"
     "用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、"
@@ -115,20 +120,22 @@ _SCREEN_WATCH_PROMPT_TEMPLATE = (
 )
 
 
-def _load_screen_watch_preference() -> Optional[bool]:
-    """讀取「記住的」開關偏好；沒有記住過（檔案不存在，或壞掉）就回傳 None，
-    呼叫端看到 None 就要跳出詢問視窗，不能自己瞎猜一個預設值。"""
-    if not _SCREEN_WATCH_STATE_FILE.exists():
-        return None
+def _load_prefs() -> dict:
+    """讀取記住的本機偏好（螢幕讀取開關、對話/STT 走本地或雲端）；檔案不存在
+    或壞掉就回傳空字典，呼叫端看某個 key 不存在時要用 .env 的預設值，不能
+    自己瞎猜。"""
+    if not _PET_PREFS_FILE.exists():
+        return {}
     try:
-        data = json.loads(_SCREEN_WATCH_STATE_FILE.read_text(encoding="utf-8"))
-        return bool(data.get("enabled"))
+        return json.loads(_PET_PREFS_FILE.read_text(encoding="utf-8"))
     except Exception:
-        return None
+        return {}
 
 
-def _save_screen_watch_preference(enabled: bool) -> None:
-    _SCREEN_WATCH_STATE_FILE.write_text(json.dumps({"enabled": enabled}), encoding="utf-8")
+def _save_prefs(**updates) -> None:
+    prefs = _load_prefs()
+    prefs.update(updates)
+    _PET_PREFS_FILE.write_text(json.dumps(prefs, ensure_ascii=False), encoding="utf-8")
 
 
 def _load_avatar_frames(display_width: int = AVATAR_DISPLAY_WIDTH):
@@ -289,12 +296,23 @@ class CharacterWindow:
         )
         self._update_dialogue_visibility()
 
+        prefs = _load_prefs()
+
         # 螢幕讀取主動搭話：有記住的偏好就直接用，沒有的話先當關閉、等視窗
         # 顯示穩定後再跳出詢問視窗（見 _prompt_screen_watch_choice）
-        remembered = _load_screen_watch_preference()
+        remembered = prefs.get("screen_watch_enabled")
         self._screen_watch_enabled = remembered if remembered is not None else False
         self._remember_screen_watch = remembered is not None
         self._screen_watch_var = tk.BooleanVar(value=self._screen_watch_enabled)
+
+        # 對話／語音辨識走本地或雲端：記住的偏好覆蓋 chat.py／stt.py 原本從
+        # .env 讀到的值（模組層級變數，直接改就會生效，見上面 import 的註解）
+        if "llm_provider" in prefs:
+            chat.LLM_PROVIDER = prefs["llm_provider"]
+        if "stt_provider" in prefs:
+            stt.STT_PROVIDER = prefs["stt_provider"]
+        self._llm_provider_var = tk.StringVar(value=chat.LLM_PROVIDER)
+        self._stt_provider_var = tk.StringVar(value=stt.STT_PROVIDER)
 
         self._context_menu = tk.Menu(
             root, tearoff=False, bg=COLOR_PANEL, fg=COLOR_TEXT,
@@ -305,6 +323,35 @@ class CharacterWindow:
             label="螢幕讀取主動搭話", variable=self._screen_watch_var,
             command=self._on_screen_watch_toggle,
         )
+
+        llm_menu = tk.Menu(
+            self._context_menu, tearoff=False, bg=COLOR_PANEL, fg=COLOR_TEXT,
+            activebackground=COLOR_ACCENT, activeforeground=COLOR_TEXT,
+        )
+        llm_menu.add_radiobutton(
+            label="本地 Ollama", variable=self._llm_provider_var, value="local",
+            command=self._on_llm_provider_change,
+        )
+        llm_menu.add_radiobutton(
+            label="雲端 OpenAI", variable=self._llm_provider_var, value="openai",
+            command=self._on_llm_provider_change,
+        )
+        self._context_menu.add_cascade(label="對話模型", menu=llm_menu)
+
+        stt_menu = tk.Menu(
+            self._context_menu, tearoff=False, bg=COLOR_PANEL, fg=COLOR_TEXT,
+            activebackground=COLOR_ACCENT, activeforeground=COLOR_TEXT,
+        )
+        stt_menu.add_radiobutton(
+            label="本地 SenseVoice", variable=self._stt_provider_var, value="local",
+            command=self._on_stt_provider_change,
+        )
+        stt_menu.add_radiobutton(
+            label="雲端 OpenAI Whisper", variable=self._stt_provider_var, value="openai",
+            command=self._on_stt_provider_change,
+        )
+        self._context_menu.add_cascade(label="語音辨識", menu=stt_menu)
+
         self._context_menu.add_separator()
         self._context_menu.add_command(label="結束", command=self._on_close)
 
@@ -550,7 +597,18 @@ class CharacterWindow:
         這次執行，不寫檔案。"""
         self._screen_watch_enabled = self._screen_watch_var.get()
         if self._remember_screen_watch:
-            _save_screen_watch_preference(self._screen_watch_enabled)
+            _save_prefs(screen_watch_enabled=self._screen_watch_enabled)
+
+    def _on_llm_provider_change(self) -> None:
+        """對話模型子選單被點擊：直接改 chat.py 的模組變數，立刻生效（不用重開
+        程式），並且記住這次選擇，下次啟動沿用。"""
+        chat.LLM_PROVIDER = self._llm_provider_var.get()
+        _save_prefs(llm_provider=chat.LLM_PROVIDER)
+
+    def _on_stt_provider_change(self) -> None:
+        """語音辨識子選單被點擊：同上，改 stt.py 的模組變數。"""
+        stt.STT_PROVIDER = self._stt_provider_var.get()
+        _save_prefs(stt_provider=stt.STT_PROVIDER)
 
     def _prompt_screen_watch_choice(self) -> None:
         """程式啟動、還沒有「記住的」偏好時跳出來問一次，不用去改 .env——
@@ -586,7 +644,7 @@ class CharacterWindow:
             self._screen_watch_var.set(enabled)
             self._remember_screen_watch = remember_var.get()
             if self._remember_screen_watch:
-                _save_screen_watch_preference(enabled)
+                _save_prefs(screen_watch_enabled=enabled)
             dialog.destroy()
 
         tk.Button(
