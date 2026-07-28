@@ -1,0 +1,37 @@
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# === API key / 機密設定（每個人用自己的，不共用）===
+.env
+
+# === 上游開源專案 clone（不是本專案原創碼，內含巨大預訓練/微調模型權重）===
+GPT-SoVITS/
+
+# === 角色語音參考音檔（衍生自版權動畫素材，不上傳；換角色時放自己的進去）===
+characters/*/voice_refs/
+
+# === 對話產出的暫時語音檔（TTS 生成結果，不是原始碼）===
+outputs/
+*.wav
+
+# === 桌寵本機偏好設定（每台機器自己的選擇，不共用）===
+scripts/desktop_pet/.screen_watch_pref.json
+
+# === 模型權重與大型二進位檔（保險起見依副檔名再擋一層）===
+*.ckpt
+*.pth
+*.pt
+*.onnx
+*.bin
+
+# === 系統雜項 ===
+.DS_Store
+Thumbs.db
+
+# === Claude Code 個人本機設定（路徑/權限因人而異，不共用）===
+.claude/settings.local.json
