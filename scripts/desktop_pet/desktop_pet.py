@@ -101,6 +101,7 @@ AVATAR_DISPLAY_WIDTH = int(os.environ.get("DESKTOP_PET_AVATAR_WIDTH", "280"))  #
 AVATAR_MIN_WIDTH = 120
 AVATAR_MAX_WIDTH = 600
 AVATAR_SCROLL_STEP = 20  # 滾輪每格縮放的像素量
+_AVATAR_RESIZE_DEBOUNCE_MS = 60  # 滾輪停下來這麼久才真的重繪，避免連續滾動時每格都重繪造成卡頓
 MOUTH_HOP_MS = 90  # 音量驅動開合嘴的取樣間隔，不是真的音素對齊
 MOUTH_THRESHOLD_RATIO = 0.3  # 這段音量超過整句最大音量的這個比例才算「張嘴」
 DRAG_THRESHOLD_PX = 3  # 按下去移動超過這個距離才算拖曳，不然當成單純點擊
@@ -141,21 +142,26 @@ def _save_prefs(**updates) -> None:
     _PET_PREFS_FILE.write_text(json.dumps(prefs, ensure_ascii=False), encoding="utf-8")
 
 
-def _load_avatar_frames(display_width: int = AVATAR_DISPLAY_WIDTH):
-    """讀 assets 底下兩張完整的角色立繪（mouth_open.png / mouth_closed.png），
-    貼到洋紅色去背色鍵的畫布上（給視窗的 -transparentcolor 用）後縮放成面板
-    要顯示的寬度。嘴巴位置/大小完全由畫圖那邊決定，程式不再自動裁切疊圖。
-    兩張圖各自生成，不透明範圍可能有些微差異（頭髮姿態不會完全一致），這裡
-    用兩張的聯集算同一個裁切框，兩張圖套用同一個框，避免切換嘴型時因為裁切
-    位置不同讓角色看起來跳動。
-    回傳 (closed_photo, open_photo, display_height)——PhotoImage 物件呼叫端
-    要留住參照，不然會被 GC 掉、畫面變空白。"""
+_avatar_source_cache: Optional[tuple] = None  # (closed_cropped, opened_cropped, 高寬比)，見 _load_avatar_source
+
+
+def _load_avatar_source() -> tuple:
+    """讀 assets 底下兩張完整的角色立繪、算裁切框，只做一次並快取——這步驟
+    含磁碟讀取＋在原始解析度上算透明範圍，比較花時間，但跟縮放到多寬完全
+    無關，滾輪縮放時重複做這步只是浪費，快取起來才不會每滾一格就卡一下。"""
+    global _avatar_source_cache
+    if _avatar_source_cache is not None:
+        return _avatar_source_cache
+
     closed = Image.open(ASSETS_DIR / "mouth_closed.png").convert("RGBA")
     opened = Image.open(ASSETS_DIR / "mouth_open.png").convert("RGBA")
 
     def _content_bbox(img: Image.Image):
         return img.split()[-1].point(lambda a: 255 if a > 200 else 0).getbbox()
 
+    # 兩張圖各自生成，不透明範圍可能有些微差異（頭髮姿態不會完全一致），這裡
+    # 用兩張的聯集算同一個裁切框，兩張圖套用同一個框，避免切換嘴型時因為裁切
+    # 位置不同讓角色看起來跳動
     cx0, cy0, cx1, cy1 = _content_bbox(closed)
     ox0, oy0, ox1, oy1 = _content_bbox(opened)
     x0, y0 = min(cx0, ox0), min(cy0, oy0)
@@ -165,18 +171,31 @@ def _load_avatar_frames(display_width: int = AVATAR_DISPLAY_WIDTH):
     right = min(closed.width, x1 + pad)
     box = (left, 0, right, closed.height)
 
-    display_height = round(display_width * closed.height / (right - left))
+    closed_cropped = closed.crop(box)
+    opened_cropped = opened.crop(box)
+    aspect_ratio = closed_cropped.height / closed_cropped.width
+    _avatar_source_cache = (closed_cropped, opened_cropped, aspect_ratio)
+    return _avatar_source_cache
+
+
+def _load_avatar_frames(display_width: int = AVATAR_DISPLAY_WIDTH):
+    """把已經裁切好的立繪（見 _load_avatar_source）縮放成面板要顯示的寬度。
+    嘴巴位置/大小完全由畫圖那邊決定，程式不再自動裁切疊圖。
+    回傳 (closed_photo, open_photo, display_height)——PhotoImage 物件呼叫端
+    要留住參照，不然會被 GC 掉、畫面變空白。"""
+    closed_cropped, opened_cropped, aspect_ratio = _load_avatar_source()
+    display_height = round(display_width * aspect_ratio)
 
     def _to_photo(img: Image.Image) -> ImageTk.PhotoImage:
-        cropped = img.crop(box).resize((display_width, display_height), Image.LANCZOS)
+        resized = img.resize((display_width, display_height), Image.LANCZOS)
         # 色鍵去背只能整格全透明或全不透明，不吃漸層 alpha，先二值化才不會
         # 在邊緣留下一圈色鍵色的毛邊（代價是邊緣是硬邊，沒有平滑抗鋸齒）
-        alpha = cropped.split()[-1].point(lambda a: 255 if a > 128 else 0)
-        canvas = Image.new("RGB", cropped.size, MAGIC_TRANSPARENT_COLOR)
-        canvas.paste(cropped.convert("RGB"), mask=alpha)
+        alpha = resized.split()[-1].point(lambda a: 255 if a > 128 else 0)
+        canvas = Image.new("RGB", resized.size, MAGIC_TRANSPARENT_COLOR)
+        canvas.paste(resized.convert("RGB"), mask=alpha)
         return ImageTk.PhotoImage(canvas)
 
-    return _to_photo(closed), _to_photo(opened), display_height
+    return _to_photo(closed_cropped), _to_photo(opened_cropped), display_height
 
 
 def _mouth_envelope(data: np.ndarray, samplerate: int, hop_ms: int = MOUTH_HOP_MS) -> list:
@@ -281,6 +300,8 @@ class CharacterWindow:
 
         # 立繪寬度：有滾輪縮放記住的偏好就用那個，沒有就用 .env 的預設值
         self._avatar_width = prefs.get("avatar_width", AVATAR_DISPLAY_WIDTH)
+        self._pending_avatar_width = self._avatar_width
+        self._avatar_resize_job: Optional[str] = None
         self.frame_closed, self.frame_open, avatar_height = _load_avatar_frames(self._avatar_width)
 
         # 無邊框、置頂、色鍵去背——畫面上真的只剩角色本人
@@ -410,13 +431,27 @@ class CharacterWindow:
 
     def _on_avatar_scroll(self, event: tk.Event) -> None:
         """滾輪縮放立繪大小：往上滾放大、往下滾縮小，範圍限制在
-        AVATAR_MIN_WIDTH~AVATAR_MAX_WIDTH。縮放後的大小會記住，下次啟動沿用，
-        跟螢幕讀取/provider 那些偏好存在同一個檔案。"""
+        AVATAR_MIN_WIDTH~AVATAR_MAX_WIDTH。這裡只更新「目標寬度」跟排程，真正
+        重繪（縮放圖片、改視窗大小）延到 _apply_avatar_resize 才做——滾很快
+        時會連續觸發一堆事件，每個都立刻重繪會卡頓，改成滾動停下來一小段時間
+        （_AVATAR_RESIZE_DEBOUNCE_MS）才真的畫一次，中途只更新數字很便宜。"""
         direction = 1 if event.delta > 0 else -1
-        new_width = max(AVATAR_MIN_WIDTH, min(AVATAR_MAX_WIDTH, self._avatar_width + direction * AVATAR_SCROLL_STEP))
-        if new_width == self._avatar_width:
+        new_width = max(AVATAR_MIN_WIDTH, min(AVATAR_MAX_WIDTH, self._pending_avatar_width + direction * AVATAR_SCROLL_STEP))
+        if new_width == self._pending_avatar_width:
             return
-        self._avatar_width = new_width
+        self._pending_avatar_width = new_width
+        if self._avatar_resize_job is not None:
+            self.root.after_cancel(self._avatar_resize_job)
+        self._avatar_resize_job = self.root.after(_AVATAR_RESIZE_DEBOUNCE_MS, self._apply_avatar_resize)
+
+    def _apply_avatar_resize(self) -> None:
+        """滾輪停下來一小段時間後才真的執行的重繪：縮放/去背圖片（快取過原始
+        素材，這步不用重讀磁碟，見 _load_avatar_source）、改視窗大小、記住這次
+        選擇的大小。"""
+        self._avatar_resize_job = None
+        if self._pending_avatar_width == self._avatar_width:
+            return
+        self._avatar_width = self._pending_avatar_width
 
         x, y = self.root.winfo_x(), self.root.winfo_y()
         self.frame_closed, self.frame_open, avatar_height = _load_avatar_frames(self._avatar_width)
