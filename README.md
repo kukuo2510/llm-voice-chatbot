@@ -24,6 +24,54 @@ A **fully local, free** character voice chatbot platform: a local LLM (Ollama) w
 
 ---
 
+## 架構 / Architecture
+
+```mermaid
+graph TD
+    subgraph FE["前端 Frontends"]
+        A1["桌寵 Desktop Pet<br/>打字 / F9 按住講話"]
+        A2["Discord Bot<br/>文字 / 語音頻道"]
+    end
+
+    subgraph STT["語音輸入 STT（選用）"]
+        S1["本地 SenseVoice"]
+        S2["雲端 OpenAI Whisper"]
+    end
+    S1 --> A1
+    S2 --> A1
+
+    A1 --> B
+    A2 --> B
+
+    B["chat.py<br/>角色人設 persona.md"]
+
+    subgraph LLM["對話生成 LLM（明確選一個，不自動偵測切換）"]
+        L1["本地 Ollama<br/>qwen2.5:14b"]
+        L2["雲端 OpenAI<br/>gpt-5.6 系列"]
+    end
+    B --> L1
+    B --> L2
+    L1 --> C
+    L2 --> C
+
+    C["reply_ja 日文回覆 + tone 語氣標籤<br/>（reply_zh 中文翻譯平行生成）"]
+    C --> D["GPT-SoVITS TTS<br/>tts_infer.py"]
+    D --> E1["喇叭播放給你聽"]
+    D --> E2["虛擬音效卡<br/>VTube Studio 對嘴（選用）"]
+
+    subgraph SW["螢幕讀取主動搭話（選用，預設關閉）"]
+        W1["背景計時器"] --> W2{"視窗黑名單<br/>命中就跳過"}
+        W2 -->|通過| W3["截圖"]
+        W3 --> W4["本地看圖模型<br/>qwen3-vl:2b"]
+        W4 --> W5["畫面描述文字"]
+    end
+    W5 -.->|"當作情境送入同一套對話管線"| B
+```
+
+**跟姊妹專案 dataset-toolkit 的關係**：上圖的 `characters/<角色>/voice_refs/` 參考音檔＋微調好的 GPT-SoVITS 模型，是 dataset-toolkit 那邊的產出，這個 repo 本身不處理原始素材，只負責拿現成的東西來跑。
+
+---
+
 ## 事前準備 / Prerequisites
 
 - Windows，[Miniconda](https://docs.conda.io/en/latest/miniconda.html)（或 Anaconda）
