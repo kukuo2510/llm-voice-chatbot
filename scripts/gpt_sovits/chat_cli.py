@@ -44,7 +44,7 @@ def main():
         print(f"祥子：{reply.reply_zh}\n")
 
         try:
-            path = generate(reply.reply_ja, tone=reply.tone)
+            path = generate(reply.reply_speech, tone=reply.tone)
             print(f"（語氣：{reply.tone}，音檔：{path}）\n")
             os.startfile(path)
         except Exception as e:

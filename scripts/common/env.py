@@ -1,10 +1,8 @@
 """共用的 .env 載入邏輯，給任何要讀 LLM_PROVIDER / STT_PROVIDER / API key 這類設定的
-模組在自己檔案最上面呼叫，不依賴呼叫端（bot.py／desktop_pet.py／...）記得先載入、
-且順序要對——之前 chat.py／stt.py 都是等呼叫端載完 .env 才 import 進來的假設，
-但 desktop_pet.py／chat_cli.py 根本沒載入過 .env，bot.py 則是先 import chat.py
-（這時候 chat.py 已經把 LLM_PROVIDER 讀成預設值了）才載入 .env，兩種情況下
-.env 裡的 LLM_PROVIDER/STT_PROVIDER 設定都不會生效。改成需要這些設定的模組
-自己在最上面呼叫 load_dotenv()，就不用管呼叫端的 import 順序。"""
+模組在自己檔案最上面呼叫，不依賴呼叫端（desktop_pet.py／chat_cli.py／...）記得先載入、
+且順序要對——曾經發生過呼叫端根本沒載入 .env、或載入順序太晚（chat.py 已經把
+LLM_PROVIDER 讀成預設值之後才載入）導致 .env 裡的設定悄悄沒生效的問題。改成
+需要這些設定的模組自己在最上面呼叫 load_dotenv()，就不用管呼叫端的 import 順序。"""
 import os
 from pathlib import Path
 

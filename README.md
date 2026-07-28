@@ -1,8 +1,8 @@
-# LLM Voice Chatbot Platform
+# LLM Voice Chatbot
 
-一個**完全本地優先、也可選雲端**的角色語音聊天平台：LLM 生成台詞、GPT-SoVITS 生成語音，透過桌寵視窗或 Discord bot 互動。內建範例角色（BanG Dream! Ave Mujica 的豐川祥子）僅供展示接線方式，平台本身設計成可換成任何角色。姊妹專案 [voice-dataset-toolkit](https://github.com/kukuo2510/voice-dataset-toolkit) 負責從你自己的素材訓練新角色的聲音。
+一個**完全本地優先、也可選雲端**的角色語音聊天平台：LLM 生成台詞、GPT-SoVITS 生成語音，透過飄浮在桌面上的透明立繪視窗（「桌寵」）互動。內建範例角色（BanG Dream! Ave Mujica 的豐川祥子）僅供展示接線方式，平台本身設計成可換成任何角色。姊妹專案 [voice-dataset-toolkit](https://github.com/kukuo2510/voice-dataset-toolkit) 負責從你自己的素材訓練新角色的聲音。
 
-A **local-first, cloud-optional** character voice chatbot: an LLM writes in-character replies, GPT-SoVITS voices them, and you talk to it via a desktop-pet window or a Discord bot. Sister project [voice-dataset-toolkit](https://github.com/kukuo2510/voice-dataset-toolkit) trains a new character's voice from your own footage.
+A **local-first, cloud-optional** character voice chatbot: an LLM writes in-character replies, GPT-SoVITS voices them, and you talk to it via a floating, borderless desktop-pet window. Sister project [voice-dataset-toolkit](https://github.com/kukuo2510/voice-dataset-toolkit) trains a new character's voice from your own footage.
 
 > Windows only（桌寵視窗用了 Windows 專屬的透明視窗技巧）。
 
@@ -10,10 +10,11 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 
 ## 這個平台做什麼 / What it does
 
-- 打字或按住熱鍵語音輸入，角色用日文回覆＋中文翻譯＋語氣標籤（開心/嚴肅/猶豫…），TTS 依語氣切換聲音表現
-- 兩種前端：桌面上飄浮的透明立繪視窗（「桌寵」），或 Discord bot（文字/語音頻道皆可）
+- 打字或按住熱鍵語音輸入，角色用語音回覆＋文字翻譯＋語氣標籤（開心/嚴肅/猶豫…），TTS 依語氣切換聲音表現
+- 角色說話的語言可設定（`CHARACTER_SPEECH_LANGUAGE`，預設日文），換角色時不用改程式碼
+- 桌面上飄浮的透明立繪視窗（「桌寵」），無邊框、只有角色本人
 - 對話用的 LLM/STT 可以是本地（Ollama/SenseVoice，免費）或雲端（OpenAI），桌寵右鍵選單隨時可切換，不用改 `.env`、不用重開程式
-- 選用功能：桌寵會定期看一眼螢幕、自己決定要不要主動找你聊天（見下方架構圖／設計決策）
+- 選用功能：桌寵會定期看一眼螢幕、自己決定要不要主動找你聊天（見下方架構圖）
 
 ---
 
@@ -21,14 +22,24 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 
 ```mermaid
 graph LR
-    A["使用者輸入<br/>桌寵 / Discord Bot<br/>打字 或 語音（SenseVoice／Whisper）"] --> B["chat.py<br/>+ persona.md"]
+    A["使用者輸入<br/>桌寵：打字 或 語音（SenseVoice／Whisper）"] --> B["chat.py<br/>+ persona.md"]
     B --> L{"LLM<br/>本地 Ollama<br/>或雲端 OpenAI"}
-    L --> C["reply_ja + tone<br/>（reply_zh 平行生成）"]
+    L --> C["reply_speech + tone<br/>（reply_zh 平行生成）"]
     C --> D["GPT-SoVITS TTS"]
     D --> E["播放<br/>喇叭 ＋ 虛擬音效卡（VTS 對嘴）"]
 
     W["螢幕讀取（選用，預設關閉）<br/>截圖 → 黑名單過濾 → qwen3-vl:2b 看圖"] -.->|當作情境| B
 ```
+
+---
+
+## 踩過的坑 / Problems → Fixes
+
+- 本地/雲端悄悄切換，使用者搞不清楚在跑哪個 → 明確選擇，不偵測 key 存在就自動切
+- 看圖模型描述太籠統、角色只會講空話 → 提示詞明講「要具體細節」，不是模型能力不夠
+- TTS 唸到一半像拖了一下 → 斷句方法 `cut5`（連逗號都切）換成 `cut3`（只在句號切）
+- 螢幕截圖涉及隱私 → 排除清單（黑名單視窗直接跳過擷取）+ 預設關閉 + 主動詢問同意
+- 改 `.env` 才能切換功能，門檻太高 → 改成右鍵選單即時切換 + 記住選擇
 
 ---
 
@@ -45,9 +56,9 @@ git clone https://github.com/RVC-Boss/GPT-SoVITS
 copy .env.example .env   # 填入需要的 token/key，細節見檔案內註解
 ```
 
-雙擊 `.bat` 檔啟動：`start_desktop_pet.bat`（桌寵）、`start_discord_bot.bat`（Discord bot）、`talk_to_sakiko.bat`（終端機 demo）、`start_tts_inference.bat`（TTS 服務，通常不用手動開，其他入口點會自動偵測啟動）。
+雙擊 `.bat` 檔啟動：`start_desktop_pet.bat`（桌寵）、`talk_to_sakiko.bat`（終端機 demo）、`start_tts_inference.bat`（TTS 服務，通常不用手動開，其他入口點會自動偵測啟動）。
 
-換成自己的角色：複製 `characters/sakiko/` → `characters/<角色>/`，換掉 `persona.md`、`voice_config.py`、`avatar/` 內容，語氣參考音檔要自己準備好（`voice-dataset-toolkit` 訓練/匯出的產物，或自己錄的），再把 `tts_infer.py`/`chat.py`/`desktop_pet.py` 裡寫死 `sakiko` 的路徑換掉。
+換成自己的角色：複製 `characters/sakiko/` → `characters/<角色>/`，換掉 `persona.md`、`voice_config.py`、`avatar/` 內容，語氣參考音檔要自己準備好（`voice-dataset-toolkit` 訓練/匯出的產物，或自己錄的），再把 `tts_infer.py`/`chat.py`/`desktop_pet.py` 裡寫死 `sakiko` 的路徑換掉。角色講不同語言的話，記得改 `.env` 的 `CHARACTER_SPEECH_LANGUAGE`，並把 `voice_config.py` 的 `PRONUNCIATION_FIXES`（目前是日文專屬的讀音修正表）換成你自己語言需要的版本。
 
 ---
 

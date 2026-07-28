@@ -1,5 +1,5 @@
 """
-對話 AI 窗口：接收使用者輸入的中文，回傳「角色用日文的回覆」＋「中文翻譯」＋「語氣標籤」。
+對話 AI 窗口：接收使用者輸入的中文，回傳「角色用指定語言的回覆」＋「中文翻譯」＋「語氣標籤」。
 
 預設走本地 Ollama（qwen2.5:14b），不需要 API key、不需要網路。想改用雲端 LLM，
 在 .env 裡設 `LLM_PROVIDER=openai`（預設是 local，不寫這行就跟以前一樣）並填
@@ -8,9 +8,13 @@
 前置需求（local）：Ollama 已安裝且服務在跑（背景常駐，`ollama serve`，通常裝好後開機
 自動啟動），已下載 qwen2.5:14b（`ollama pull qwen2.5:14b`）。
 
-reply_ja/tone 生成跟 reply_zh 翻譯拆成兩支獨立函式（chat_ja / translate_zh），
-是因為 TTS 只吃得到 reply_ja + tone，不需要等翻譯完成——呼叫端（bot.py）可以拿到
-reply_ja 後立刻開始跑語音合成，同時平行呼叫 translate_zh，縮短使用者實際等待的時間。
+角色實際開口說的語言由 `CHARACTER_SPEECH_LANGUAGE`（.env）決定，預設「日文」——
+範例角色（豐川祥子）設計成講日文，換成自己的角色時改這個值就好，不用動程式碼。
+給使用者看的翻譯固定是繁體中文（`reply_zh`），跟角色說話的語言是兩件獨立的事。
+
+reply_speech/tone 生成跟 reply_zh 翻譯拆成兩支獨立函式（chat_ja / translate_zh），
+是因為 TTS 只吃得到 reply_speech + tone，不需要等翻譯完成——呼叫端可以拿到
+reply_speech 後立刻開始跑語音合成，同時平行呼叫 translate_zh，縮短使用者實際等待的時間。
 chat() 保留為兩者的合併版本，供不在意這個延遲差異的呼叫端（例如互動式 CLI）使用。
 """
 import json
@@ -31,6 +35,9 @@ load_dotenv()
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/chat")
 MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:14b")
 
+# 角色開口說話用的語言，換角色/換語言時只用改這個值，不用碰下面的提示詞模板
+CHARACTER_SPEECH_LANGUAGE = os.environ.get("CHARACTER_SPEECH_LANGUAGE", "日文")
+
 # 要選了才會切，不是偵測到 OPENAI_API_KEY 存在就自動切走
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "local").strip().lower()
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -43,24 +50,27 @@ TONE_OPTIONS = ["neutral", "happy", "serious", "hesitant", "intense"]
 # 不用碰這支程式碼；要換角色，把這裡的 "sakiko" 換成你自己的角色資料夾名稱
 PERSONA_PATH = Path(__file__).resolve().parents[2] / "characters" / "sakiko" / "persona.md"
 
-_OUTPUT_FORMAT_INSTRUCTIONS = """
+_OUTPUT_FORMAT_INSTRUCTIONS = f"""
 使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
-{
-  "reply_ja": "用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文，不要中日夾雜",
-  "reply_zh": "reply_ja 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙",
+{{
+  "reply_speech": "用{CHARACTER_SPEECH_LANGUAGE}，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的{CHARACTER_SPEECH_LANGUAGE}，不要中英日等語言夾雜",
+  "reply_zh": "reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙",
   "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
-}
+}}
 """
 
-_JA_OUTPUT_FORMAT_INSTRUCTIONS = """
+_SPEECH_ONLY_OUTPUT_FORMAT_INSTRUCTIONS = f"""
 使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
-{
-  "reply_ja": "用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文，不要中日夾雜",
+{{
+  "reply_speech": "用{CHARACTER_SPEECH_LANGUAGE}，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的{CHARACTER_SPEECH_LANGUAGE}，不要中英日等語言夾雜",
   "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
-}
+}}
 """
 
-_ZH_TRANSLATE_SYSTEM_PROMPT = """你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣
+# 下面這份翻譯提示詞的第一段（語言、用詞）是通用邏輯，換角色/換語言都適用；
+# 但「ですわ／ますの語尾」那一段是範例角色（豐川祥子）的專屬說話習慣，換成
+# 自己的角色或語言時，這段連同下面的專有名詞讀音對照都要換成你自己的設定
+_ZH_TRANSLATE_SYSTEM_PROMPT = f"""你是專業的{CHARACTER_SPEECH_LANGUAGE}翻譯，把使用者提供的{CHARACTER_SPEECH_LANGUAGE}句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣
 （例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。
 
 原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，
@@ -80,17 +90,17 @@ def _load_persona_text() -> str:
 
 
 DEFAULT_SYSTEM_PROMPT = _load_persona_text() + "\n" + _OUTPUT_FORMAT_INSTRUCTIONS
-DEFAULT_JA_SYSTEM_PROMPT = _load_persona_text() + "\n" + _JA_OUTPUT_FORMAT_INSTRUCTIONS
+DEFAULT_JA_SYSTEM_PROMPT = _load_persona_text() + "\n" + _SPEECH_ONLY_OUTPUT_FORMAT_INSTRUCTIONS
 
 
 class SakikoReply(BaseModel):
-    reply_ja: str
+    reply_speech: str
     reply_zh: str
     tone: Literal["neutral", "happy", "serious", "hesitant", "intense"]
 
 
 class SakikoReplyJa(BaseModel):
-    reply_ja: str
+    reply_speech: str
     tone: Literal["neutral", "happy", "serious", "hesitant", "intense"]
 
 
@@ -194,7 +204,9 @@ def _call_llm(messages: list[dict], *, json_format: bool, timeout: int = 120) ->
 
 
 def chat_ja(user_message: str, system_prompt: str = DEFAULT_JA_SYSTEM_PROMPT) -> SakikoReplyJa:
-    """只生成日文回覆＋語氣標籤（給 TTS 用），不含中文翻譯，走最短路徑"""
+    """只生成角色語言的回覆＋語氣標籤（給 TTS 用），不含中文翻譯，走最短路徑。
+    函式名沿用 chat_ja 是歷史命名，實際語言由 CHARACTER_SPEECH_LANGUAGE 決定，
+    不是寫死日文。"""
     raw_content = _call_llm(
         [
             {"role": "system", "content": system_prompt},
@@ -209,12 +221,12 @@ def chat_ja(user_message: str, system_prompt: str = DEFAULT_JA_SYSTEM_PROMPT) ->
         raise ValueError(f"LLM 回傳的格式不符預期，原始內容：{raw_content!r}") from e
 
 
-def translate_zh(reply_ja: str) -> str:
-    """把日文回覆翻譯成台灣用語的繁體中文，給使用者看（不在 TTS 的關鍵路徑上，可跟語音生成平行跑）"""
+def translate_zh(reply_speech: str) -> str:
+    """把角色說的話翻譯成台灣用語的繁體中文，給使用者看（不在 TTS 的關鍵路徑上，可跟語音生成平行跑）"""
     raw_content = _call_llm(
         [
             {"role": "system", "content": _ZH_TRANSLATE_SYSTEM_PROMPT},
-            {"role": "user", "content": reply_ja},
+            {"role": "user", "content": reply_speech},
         ],
         json_format=False,
     )
@@ -222,15 +234,15 @@ def translate_zh(reply_ja: str) -> str:
 
 
 def chat(user_message: str, system_prompt: str = DEFAULT_SYSTEM_PROMPT) -> SakikoReply:
-    """呼叫本地 LLM，回傳結構化結果：reply_ja（餵 TTS）、reply_zh（顯示給使用者）、tone（語氣標籤）
+    """呼叫本地 LLM，回傳結構化結果：reply_speech（餵 TTS）、reply_zh（顯示給使用者）、tone（語氣標籤）
 
     內部就是 chat_ja + translate_zh 的合併版本，兩次呼叫依序執行。
-    在意延遲的呼叫端（例如 bot.py）應該直接分開呼叫 chat_ja / translate_zh，
+    在意延遲的呼叫端（例如 desktop_pet.py）應該直接分開呼叫 chat_ja / translate_zh，
     讓語音生成跟翻譯平行跑，而不是用這支函式。
     """
-    reply_ja = chat_ja(user_message, system_prompt=system_prompt)
-    reply_zh = translate_zh(reply_ja.reply_ja)
-    return SakikoReply(reply_ja=reply_ja.reply_ja, reply_zh=reply_zh, tone=reply_ja.tone)
+    reply_speech = chat_ja(user_message, system_prompt=system_prompt)
+    reply_zh = translate_zh(reply_speech.reply_speech)
+    return SakikoReply(reply_speech=reply_speech.reply_speech, reply_zh=reply_zh, tone=reply_speech.tone)
 
 
 if __name__ == "__main__":
@@ -241,6 +253,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     reply = chat(sys.argv[1])
-    print(f"[日文/TTS用] {reply.reply_ja}")
+    print(f"[角色語言/TTS用] {reply.reply_speech}")
     print(f"[中文顯示]   {reply.reply_zh}")
     print(f"[語氣]       {reply.tone}")

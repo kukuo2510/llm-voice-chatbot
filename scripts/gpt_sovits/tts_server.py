@@ -1,5 +1,5 @@
 """確保本地 GPT-SoVITS 推理服務（api_v2.py）有在跑，沒有就自動啟動——跟角色無關的
-通用邏輯，desktop_pet.py / discord_bot/bot.py / chat_cli.py 共用。
+通用邏輯，desktop_pet.py / chat_cli.py 共用。
 """
 import subprocess
 import sys

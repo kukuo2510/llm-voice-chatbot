@@ -97,7 +97,7 @@ CABLE_DEVICE_NAME_HINT = "CABLE Input"
 # 立繪素材放在 characters/<角色>/avatar/，跟角色人設、語音設定同一套規則；
 # 要換角色，把這裡的 "sakiko" 換成你自己的角色資料夾名稱
 ASSETS_DIR = Path(__file__).resolve().parents[2] / "characters" / "sakiko" / "avatar"
-AVATAR_DISPLAY_WIDTH = 280  # 立繪顯示寬度，高度依素材比例算出來
+AVATAR_DISPLAY_WIDTH = int(os.environ.get("DESKTOP_PET_AVATAR_WIDTH", "280"))  # 立繪顯示寬度（像素），高度依素材比例算出來
 MOUTH_HOP_MS = 90  # 音量驅動開合嘴的取樣間隔，不是真的音素對齊
 MOUTH_THRESHOLD_RATIO = 0.3  # 這段音量超過整句最大音量的這個比例才算「張嘴」
 DRAG_THRESHOLD_PX = 3  # 按下去移動超過這個距離才算拖曳，不然當成單純點擊
@@ -685,19 +685,18 @@ class CharacterWindow:
             self._task_queue.put(("error", f"對話生成失敗：{e}"))
             return
 
-        # 語音生成跟中文翻譯平行跑，做法跟 discord_bot/bot.py 一致：
-        # 播放/對嘴只需要 reply_ja/tone，不必等翻譯完成
+        # 語音生成跟中文翻譯平行跑：播放/對嘴只需要 reply_speech/tone，不必等翻譯完成
         result: dict = {}
 
         def _run_generate():
             try:
-                result["audio_path"] = generate(reply.reply_ja, None, reply.tone)
+                result["audio_path"] = generate(reply.reply_speech, None, reply.tone)
             except Exception as e:
                 result["audio_error"] = e
 
         def _run_translate():
             try:
-                result["reply_zh"] = translate_zh(reply.reply_ja)
+                result["reply_zh"] = translate_zh(reply.reply_speech)
             except Exception as e:
                 result["zh_error"] = e
 
