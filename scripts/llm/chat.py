@@ -197,9 +197,12 @@ def _call_openai(messages: list[dict], *, json_format: bool, timeout: int = 120)
 
 def _call_llm(messages: list[dict], *, json_format: bool, timeout: int = 120) -> str:
     """依 LLM_PROVIDER 分流打本地 Ollama 或 OpenAI，兩邊回傳格式在這裡已經對齊，
-    呼叫端不用管是哪一個供應商。"""
+    呼叫端不用管是哪一個供應商。印一行到主控台，方便切換 provider 之後直接
+    肉眼確認這次真的打去哪裡，不用另外寫測試腳本。"""
     if LLM_PROVIDER == "openai":
+        print(f"[chat] 對話走雲端 OpenAI（{OPENAI_CHAT_MODEL}）")
         return _call_openai(messages, json_format=json_format, timeout=timeout)
+    print(f"[chat] 對話走本地 Ollama（{MODEL}）")
     return _call_ollama(messages, json_format=json_format, timeout=timeout)
 
 

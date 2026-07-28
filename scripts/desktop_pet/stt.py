@@ -136,7 +136,9 @@ def _transcribe_openai(audio: np.ndarray) -> str:
 def transcribe(audio: np.ndarray) -> str:
     """audio：16kHz、單聲道、float32 numpy array"""
     if STT_PROVIDER == "openai":
+        print(f"[stt] 語音辨識走雲端 OpenAI（{OPENAI_STT_MODEL}）")
         return _transcribe_openai(audio)
+    print("[stt] 語音辨識走本地 SenseVoice")
     model = _get_model()
     results = model.generate(input=audio, language="auto", use_itn=True, cache={})
     if not results:
