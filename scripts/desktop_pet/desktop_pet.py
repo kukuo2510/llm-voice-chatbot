@@ -47,6 +47,7 @@ Input），讓它對嘴；桌寵本體的立繪也會依音量開合嘴。
     C:\\miniconda3\\envs\\tts-platform\\python.exe scripts\\desktop_pet\\desktop_pet.py
     按住 F9 講話、放開結束（熱鍵是全域的，切到遊戲畫面也能用，不用先切回這個視窗）
 """
+import ctypes
 import json
 import os
 import queue
@@ -118,6 +119,21 @@ DRAG_THRESHOLD_PX = 3  # 按下去移動超過這個距離才算拖曳，不然�
 # 小檔案，不記住的話下次開程式還是照 .env 的預設值
 SCREEN_WATCH_INTERVAL_SEC = int(os.environ.get("SCREEN_WATCH_INTERVAL_SEC", "20"))
 _PET_PREFS_FILE = Path(__file__).resolve().parent / ".pet_prefs.json"
+
+_GA_ROOT = 2  # win32 GetAncestor 旗標：取得最上層視窗
+_WDA_EXCLUDEFROMCAPTURE = 0x00000011  # win32 SetWindowDisplayAffinity 旗標
+
+
+def _exclude_self_from_screen_capture(tk_hwnd: int) -> None:
+    """讓 screen_watch 的全螢幕擷取跳過桌寵本體視窗，不然看螢幕功能會把自己
+    的立繪也拍進去、餵給看圖模型。pywin32 沒包這個 API，直接用 ctypes 呼叫
+    user32；失敗（例如舊版 Windows 不支援）就當作沒這回事，不影響其他功能。"""
+    try:
+        user32 = ctypes.windll.user32
+        root_hwnd = user32.GetAncestor(tk_hwnd, _GA_ROOT) or tk_hwnd
+        user32.SetWindowDisplayAffinity(root_hwnd, _WDA_EXCLUDEFROMCAPTURE)
+    except Exception:
+        pass
 _SCREEN_WATCH_PROMPT_TEMPLATE = (
     "（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：{caption}。"
     "用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、"
@@ -314,6 +330,8 @@ class CharacterWindow:
         root.configure(bg=MAGIC_TRANSPARENT_COLOR)
         root.wm_attributes("-transparentcolor", MAGIC_TRANSPARENT_COLOR)
         root.geometry(f"{self._avatar_width}x{avatar_height}+120+120")
+        root.update_idletasks()
+        _exclude_self_from_screen_capture(root.winfo_id())
 
         self.avatar_label = tk.Label(
             root, image=self.frame_closed, bg=MAGIC_TRANSPARENT_COLOR, bd=0, highlightthickness=0,

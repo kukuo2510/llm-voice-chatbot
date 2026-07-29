@@ -65,24 +65,35 @@ def _blocked_title_keywords() -> set:
     return _DEFAULT_BLOCKED_TITLE_KEYWORDS | _extra_from_env("SCREEN_WATCH_BLOCKED_TITLE_KEYWORDS")
 
 
-def _foreground_window_info() -> tuple[str, str]:
-    """回傳 (視窗標題, 程式檔名)，兩者都轉小寫方便比對；任何一步失敗就回傳空字串，
-    當作「查不到就不要冒險」，交給呼叫端決定要不要照樣繼續。"""
+def _foreground_window_info() -> tuple[str, str, str]:
+    """回傳 (視窗標題, 程式檔名, 視窗類別名稱)，標題/程式檔名轉小寫方便比對；
+    任何一步失敗就回傳空字串，當作「查不到就不要冒險」，交給呼叫端決定要不要
+    照樣繼續。"""
     try:
         hwnd = win32gui.GetForegroundWindow()
         title = win32gui.GetWindowText(hwnd) or ""
+        class_name = win32gui.GetClassName(hwnd) or ""
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
         process_name = psutil.Process(pid).name() if pid else ""
     except Exception:
-        return "", ""
-    return title.lower(), process_name.lower()
+        return "", "", ""
+    return title.lower(), process_name.lower(), class_name
+
+
+# 桌面本體／工作列／開始鍵這幾個「殼」視窗不算隱私考量，是另一種排除理由：
+# 截了也只會拍到桌布或工作列，看圖模型只會生出「使用者在看桌面」這種空泛
+# 描述，直接跳過，省一次沒意義的看圖呼叫
+_SHELL_WINDOW_CLASSES = {"Progman", "WorkerW", "Shell_TrayWnd", "Button"}
 
 
 def is_capture_blocked() -> bool:
-    """目前作用中的視窗是否命中黑名單（程式名稱或標題關鍵字）。查不到視窗資訊
-    （API 呼叫失敗）也視為封鎖，寧可少看一次，不要在不確定的情況下硬拍。"""
-    title, process_name = _foreground_window_info()
+    """目前作用中的視窗是否命中黑名單（程式名稱、標題關鍵字，或桌面/工作列殼
+    視窗）。查不到視窗資訊（API 呼叫失敗）也視為封鎖，寧可少看一次，不要在
+    不確定的情況下硬拍。"""
+    title, process_name, class_name = _foreground_window_info()
     if not title and not process_name:
+        return True
+    if class_name in _SHELL_WINDOW_CLASSES:
         return True
     if process_name in _blocked_processes():
         return True
