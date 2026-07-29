@@ -3,6 +3,13 @@
 版號規則：語意化版本（`vX.Y.Z`）——累積到一個功能完整的里程碑才打 tag，不是每個
 commit 都算一版。日期為 GitHub 發布日期。
 
+## [0.1.1] - 2026-07-29
+
+- README 補齊剩下幾段的英文版本(先前只有開頭跟版權聲明有雙語),移除瑣碎的「Windows only」提示行
+
+README is now fully bilingual throughout (previously only the intro and
+copyright sections were); dropped a trivial "Windows only" line.
+
 ## [0.1.0] - 2026-07-29
 
 第一個公開版本的完整功能快照。
