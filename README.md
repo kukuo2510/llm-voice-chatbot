@@ -6,8 +6,6 @@
 
 A **local-first, cloud-optional** character voice chatbot: an LLM writes in-character replies, GPT-SoVITS voices them, and you talk to it via a floating, borderless desktop-pet window. Sister project [voice-dataset-toolkit](https://github.com/kukuo2510/voice-dataset-toolkit) trains a new character's voice from your own footage.
 
-> Windows only（桌寵視窗用了 Windows 專屬的透明視窗技巧）。
-
 ---
 
 ## 這個平台做什麼 / What it does
@@ -17,6 +15,12 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 - 桌面上飄浮的透明立繪視窗（「桌寵」），無邊框、只有角色本人；滾滑鼠滾輪可即時縮放大小
 - 對話用的 LLM/STT 可以是本地（Ollama/SenseVoice，免費）或雲端（OpenAI），桌寵右鍵選單隨時可切換，不用改 `.env`、不用重開程式
 - 選用功能：桌寵會定期看一眼螢幕、自己決定要不要主動找你聊天（見下方架構圖）
+
+- Type or hold a hotkey to talk; the character replies with voice + a text translation + a tone tag (happy/serious/hesitant...), and TTS switches its delivery to match
+- Character speech language is configurable (the desktop pet's right-click "Character Speech Language" submenu switches it instantly — common languages are one click away, anything else via "Custom..."; or set a starting value with `.env`'s `CHARACTER_SPEECH_LANGUAGE`), defaults to Japanese, no code changes needed when swapping characters
+- A floating, transparent character window (the "desktop pet") — borderless, only the character itself is visible; scroll the mouse wheel over it to resize instantly
+- LLM/STT can be local (Ollama/SenseVoice, free) or cloud (OpenAI), switchable anytime from the desktop pet's right-click menu, no `.env` edits or restart needed
+- Optional: the desktop pet periodically glances at your screen and decides on its own whether to start a conversation (see architecture diagram below)
 
 ---
 
@@ -43,6 +47,12 @@ graph LR
 - 螢幕截圖涉及隱私 → 排除清單（黑名單視窗直接跳過擷取）+ 預設關閉 + 主動詢問同意
 - 改 `.env` 才能切換功能，門檻太高 → 改成右鍵選單即時切換 + 記住選擇
 
+- Silent local/cloud switching left users unsure which one was actually running → explicit selection required, never auto-switches just because a key happens to be set
+- Vision-model captions were too vague, so the character only gave empty responses → the prompt now explicitly demands concrete detail; this was a prompt problem, not a model-capability ceiling
+- TTS sounded like it dragged mid-sentence → switched the sentence-splitting method from `cut5` (splits on every punctuation mark) to `cut3` (splits only at periods)
+- Screen capture touches on privacy → an exclusion list (blacklisted windows skip capture entirely) + off by default + an explicit opt-in prompt
+- Editing `.env` just to toggle a feature was too high a barrier → switched to right-click menu toggles that remember your choice
+
 ---
 
 ## 安裝與執行 / Setup & Run
@@ -61,6 +71,10 @@ copy .env.example .env   # 填入需要的 token/key，細節見檔案內註解
 雙擊 `.bat` 檔啟動：`start_desktop_pet.bat`（桌寵）、`talk_to_sakiko.bat`（終端機 demo）、`start_tts_inference.bat`（TTS 服務，通常不用手動開，其他入口點會自動偵測啟動）。
 
 換成自己的角色：複製 `characters/sakiko/` → `characters/<角色>/`，換掉 `persona.md`、`voice_config.py`、`avatar/` 內容，語氣參考音檔要自己準備好（`voice-dataset-toolkit` 訓練/匯出的產物，或自己錄的），再把 `tts_infer.py`/`chat.py`/`desktop_pet.py` 裡寫死 `sakiko` 的路徑換掉。角色講不同語言的話，記得改 `.env` 的 `CHARACTER_SPEECH_LANGUAGE`，並把 `voice_config.py` 的 `PRONUNCIATION_FIXES`（目前是日文專屬的讀音修正表）換成你自己語言需要的版本。
+
+Launch via the `.bat` files: `start_desktop_pet.bat` (the desktop pet), `talk_to_sakiko.bat` (a terminal demo), `start_tts_inference.bat` (the TTS server — usually no need to run this yourself, the other entry points detect and start it automatically).
+
+To use your own character: copy `characters/sakiko/` to `characters/<your-character>/`, replace `persona.md`, `voice_config.py`, and the `avatar/` assets, and provide your own tone-reference audio clips (exported/trained via `voice-dataset-toolkit`, or recorded yourself). Then update the hardcoded `sakiko` paths in `tts_infer.py`/`chat.py`/`desktop_pet.py`. If your character speaks a different language, set `.env`'s `CHARACTER_SPEECH_LANGUAGE` accordingly, and replace `voice_config.py`'s `PRONUNCIATION_FIXES` (currently a Japanese-specific pronunciation-correction table) with whatever your language needs.
 
 ---
 
