@@ -56,11 +56,26 @@ PERSONA_PATH = Path(__file__).resolve().parents[2] / "characters" / "sakiko" / "
 # 之後改這個變數也不會生效，因為字串早就內插、烤死在裡面了。
 
 
+# qwen2.5 用中文下指令時，即使明確要求輸出{CHARACTER_SPEECH_LANGUAGE}，還是偶爾會
+# 整個詞彙沒轉換、直接冒出中文字詞（訓練資料以中文為主的慣性），只講「不要語言
+# 夾雜」不夠，要明確講「一個中文字都不行」並提醒它自我檢查。跟上面兩份提示詞一樣
+# 寫成函式、每次呼叫才組字串，不要固定成常數——不然 CHARACTER_SPEECH_LANGUAGE
+# 執行中被改掉（桌寵右鍵選單）也不會反映在這裡
+def _reply_speech_field_instructions() -> str:
+    lang = CHARACTER_SPEECH_LANGUAGE
+    return (
+        f"用{lang}，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、"
+        f"適合唸出來的{lang}。這欄位絕對不能出現任何一個中文字／中文詞彙，即使是輸入的中文"
+        f"詞彙裡剛好有漢字看起來很像也一樣，全部都要轉換成道地的{lang}表達方式；寫完之後"
+        f"自己檢查一遍，確認整句都是{lang}才輸出"
+    )
+
+
 def _build_output_format_instructions() -> str:
     return f"""
 使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
-  "reply_speech": "用{CHARACTER_SPEECH_LANGUAGE}，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的{CHARACTER_SPEECH_LANGUAGE}，不要中英日等語言夾雜",
+  "reply_speech": "{_reply_speech_field_instructions()}",
   "reply_zh": "reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙",
   "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
 }}
@@ -71,7 +86,7 @@ def _build_speech_only_output_format_instructions() -> str:
     return f"""
 使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
-  "reply_speech": "用{CHARACTER_SPEECH_LANGUAGE}，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的{CHARACTER_SPEECH_LANGUAGE}，不要中英日等語言夾雜",
+  "reply_speech": "{_reply_speech_field_instructions()}",
   "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
 }}
 """
