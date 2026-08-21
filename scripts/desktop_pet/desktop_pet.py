@@ -13,6 +13,8 @@ Input），讓它對嘴；桌寵本體的立繪也會依音量開合嘴。
       _on_ptt_transcribed 的取捨說明）
     - 右鍵角色：彈出選單（顯示/隱藏歷史紀錄、結束）——沒有標題列就沒有
       關閉鈕，結束程式要走這裡
+    - 重力/落地（見 desktop_physics.py）：放著不管會自己往下掉，落在工作列
+      或其他視窗的上緣，不會呆呆飄在螢幕中間；右鍵選單可以隨時關掉這個效果
 
 只有這裡生成出來的語音會進虛擬音效卡——是程式直接指定裝置播放，不是把系統
 預設輸出整個換成虛擬音效卡，所以不會有其他系統音效（通知音、其他程式聲音）
@@ -51,6 +53,7 @@ import ctypes
 import json
 import os
 import queue
+import random
 import sys
 import threading
 import time
@@ -77,6 +80,7 @@ from tts_server import is_server_ready, start_server  # noqa: E402
 import stt  # noqa: E402  — 同上，切換 STT 本地/雲端要改 stt.STT_PROVIDER
 from stt import PushToTalkRecorder  # noqa: E402
 from screen_watch import look_at_screen  # noqa: E402
+import desktop_physics  # noqa: E402
 
 # Ave Mujica 氛圍配色（哥德紫＋金色點綴）——不是查證過的官方角色色票，
 # 是照劇中面具/薔薇/歌德風美術方向抓的氣氛色，想換成別的顏色跟我說就好
@@ -111,6 +115,20 @@ MOUTH_HOP_MS = 90  # 音量驅動開合嘴的取樣間隔，不是真的音素�
 MOUTH_THRESHOLD_RATIO = 0.3  # 這段音量超過整句最大音量的這個比例才算「張嘴」
 DRAG_THRESHOLD_PX = 3  # 按下去移動超過這個距離才算拖曳，不然當成單純點擊
 
+# 桌寵物理（重力／落地，見 desktop_physics.py）：純手感調出來的值，不是物理
+# 正確的單位換算，調快/調慢直接改這兩個數字就好
+PHYSICS_TICK_MS = 33  # 重力/落地判定的更新頻率，約 30fps
+GRAVITY_PX_S2 = 2200.0
+FALL_TERMINAL_VELOCITY_PX_S = 1400.0
+
+# 落地後的自主漫遊：左右滑動現有靜態立繪（翻轉表示方向），不是真的走路動畫，
+# 純手感調出來的值
+WANDER_SPEED_PX_S = 110.0
+WANDER_MIN_INTERVAL_SEC = 5.0  # 兩次漫遊之間至少等這麼久
+WANDER_MAX_INTERVAL_SEC = 15.0
+WANDER_MIN_DURATION_SEC = 1.0  # 一次漫遊走多久
+WANDER_MAX_DURATION_SEC = 3.0
+
 # 螢幕讀取主動搭話（規劃見 TTS通用平台_專案規劃.md 10.5）：開關不是靠改 .env
 # 這種要開檔案編輯的方式決定（試用門檻太高，等於變相勸退），而是程式啟動時
 # 跳出詢問視窗、加上右鍵選單隨時可切換——「記不記住這次選擇」才是使用者
@@ -124,16 +142,19 @@ _GA_ROOT = 2  # win32 GetAncestor 旗標：取得最上層視窗
 _WDA_EXCLUDEFROMCAPTURE = 0x00000011  # win32 SetWindowDisplayAffinity 旗標
 
 
-def _exclude_self_from_screen_capture(tk_hwnd: int) -> None:
+def _exclude_self_from_screen_capture(tk_hwnd: int) -> int:
     """讓 screen_watch 的全螢幕擷取跳過桌寵本體視窗，不然看螢幕功能會把自己
     的立繪也拍進去、餵給看圖模型。pywin32 沒包這個 API，直接用 ctypes 呼叫
-    user32；失敗（例如舊版 Windows 不支援）就當作沒這回事，不影響其他功能。"""
+    user32；失敗（例如舊版 Windows 不支援）就當作沒這回事，不影響其他功能。
+    回傳解析出來的最上層 hwnd（失敗就回傳原本的 tk_hwnd），讓呼叫端可以重用
+    這個 hwnd 做其他 win32 呼叫（見 desktop_physics，落地判定要排除自己）。"""
     try:
         user32 = ctypes.windll.user32
         root_hwnd = user32.GetAncestor(tk_hwnd, _GA_ROOT) or tk_hwnd
         user32.SetWindowDisplayAffinity(root_hwnd, _WDA_EXCLUDEFROMCAPTURE)
+        return root_hwnd
     except Exception:
-        pass
+        return tk_hwnd
 _SCREEN_WATCH_PROMPT_TEMPLATE = (
     "（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：{caption}。"
     "用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、"
@@ -198,12 +219,16 @@ def _load_avatar_source() -> tuple:
     return _avatar_source_cache
 
 
-def _load_avatar_frames(display_width: int = AVATAR_DISPLAY_WIDTH):
+def _load_avatar_frames(display_width: int = AVATAR_DISPLAY_WIDTH, mirror: bool = False):
     """把已經裁切好的立繪（見 _load_avatar_source）縮放成面板要顯示的寬度。
-    嘴巴位置/大小完全由畫圖那邊決定，程式不再自動裁切疊圖。
+    嘴巴位置/大小完全由畫圖那邊決定，程式不再自動裁切疊圖。mirror=True 時
+    左右翻轉——漫遊往左走時用，省了另外準備一組「面向左」立繪素材的成本。
     回傳 (closed_photo, open_photo, display_height)——PhotoImage 物件呼叫端
     要留住參照，不然會被 GC 掉、畫面變空白。"""
     closed_cropped, opened_cropped, aspect_ratio = _load_avatar_source()
+    if mirror:
+        closed_cropped = closed_cropped.transpose(Image.FLIP_LEFT_RIGHT)
+        opened_cropped = opened_cropped.transpose(Image.FLIP_LEFT_RIGHT)
     display_height = round(display_width * aspect_ratio)
 
     def _to_photo(img: Image.Image) -> ImageTk.PhotoImage:
@@ -322,7 +347,9 @@ class CharacterWindow:
         self._avatar_width = prefs.get("avatar_width", AVATAR_DISPLAY_WIDTH)
         self._pending_avatar_width = self._avatar_width
         self._avatar_resize_job: Optional[str] = None
+        self._facing = "right"
         self.frame_closed, self.frame_open, avatar_height = _load_avatar_frames(self._avatar_width)
+        self.frame_closed_l, self.frame_open_l, _ = _load_avatar_frames(self._avatar_width, mirror=True)
 
         # 無邊框、置頂、色鍵去背——畫面上真的只剩角色本人
         root.overrideredirect(True)
@@ -331,7 +358,15 @@ class CharacterWindow:
         root.wm_attributes("-transparentcolor", MAGIC_TRANSPARENT_COLOR)
         root.geometry(f"{self._avatar_width}x{avatar_height}+120+120")
         root.update_idletasks()
-        _exclude_self_from_screen_capture(root.winfo_id())
+        self._hwnd = _exclude_self_from_screen_capture(root.winfo_id())
+
+        # 桌寵物理（重力/落地，見 desktop_physics.py）：先都當作沒按著滑鼠、
+        # 沒有垂直速度，開機那一刻就會開始往下掉，直到落在某個平台或工作列
+        self._mouse_down = False
+        self._fall_velocity = 0.0
+        self._physics_enabled_var = tk.BooleanVar(value=True)
+        self._walk_seconds_left = 0.0
+        self._next_wander_at = time.monotonic() + random.uniform(WANDER_MIN_INTERVAL_SEC, WANDER_MAX_INTERVAL_SEC)
 
         self.avatar_label = tk.Label(
             root, image=self.frame_closed, bg=MAGIC_TRANSPARENT_COLOR, bd=0, highlightthickness=0,
@@ -372,6 +407,12 @@ class CharacterWindow:
         self._context_menu.add_checkbutton(
             label="螢幕讀取主動搭話", variable=self._screen_watch_var,
             command=self._on_screen_watch_toggle,
+        )
+        # 桌寵物理（重力/落地）第一階段先試試看，不確定好不好玩、會不會卡到
+        # 其他操作，所以做成可以隨時關掉，這次先不記住選擇（跟螢幕讀取那個
+        # 開關不一樣），驗證過真的想要再考慮要不要記住
+        self._context_menu.add_checkbutton(
+            label="重力（桌面感）", variable=self._physics_enabled_var,
         )
 
         llm_menu = tk.Menu(
@@ -430,6 +471,7 @@ class CharacterWindow:
 
         self._task_queue: "queue.Queue[tuple[str, object]]" = queue.Queue()
         self.root.after(50, self._poll_queue)
+        self.root.after(PHYSICS_TICK_MS, self._physics_tick)
 
         # push-to-talk：全域熱鍵，錄音/轉文字都在背景執行緒跑，不會卡住視窗
         self._ptt_recorder = PushToTalkRecorder(
@@ -450,6 +492,7 @@ class CharacterWindow:
 
     def _on_avatar_press(self, event: tk.Event) -> None:
         self._dragged = False
+        self._mouse_down = True  # 按著的這段時間物理 tick 暫停，放開後從當下位置繼續掉
         self._drag_origin = (event.x_root, event.y_root)
         self._win_origin = (self.root.winfo_x(), self.root.winfo_y())
 
@@ -462,8 +505,69 @@ class CharacterWindow:
         self._position_input_popup()
 
     def _on_avatar_release(self, event: tk.Event) -> None:
+        self._mouse_down = False
+        self._fall_velocity = 0.0  # 放開的瞬間重新開始加速掉落，不要延續拖曳前累積的速度
         if not self._dragged:
             self._toggle_input_popup()
+
+    # ---------- 桌寵物理（重力/落地，見 desktop_physics.py） ----------
+
+    def _physics_tick(self) -> None:
+        """每 tick 都重新問一次「正下方最近的平台在哪」，不快取任何「目前站
+        在哪個視窗上」的狀態——平台被關掉/移走，下一 tick 自然就會開始往下一
+        個平台掉，不用另外偵測「平台消失了」。按著角色拖曳時暫停（見
+        _mouse_down），放開後從放開的位置繼續掉。落地時（沒在掉落中）才會
+        觸發自主漫遊，見 _advance_wander。"""
+        if self._physics_enabled_var.get() and not self._mouse_down:
+            dt = PHYSICS_TICK_MS / 1000
+            x = self.root.winfo_x()
+            y = self.root.winfo_y()
+            w = self.root.winfo_width()
+            h = self.root.winfo_height()
+            surface_y = desktop_physics.find_landing_y(x, x + w, y + h, self._hwnd)
+            falling = y + h < surface_y - 1
+            if falling:
+                self._fall_velocity = min(self._fall_velocity + GRAVITY_PX_S2 * dt, FALL_TERMINAL_VELOCITY_PX_S)
+                new_y = min(y + self._fall_velocity * dt, surface_y - h)
+                new_x = x
+            else:
+                self._fall_velocity = 0.0
+                new_y = surface_y - h
+                new_x = self._advance_wander(x, w, dt)
+            if new_x != x or new_y != y:
+                self.root.geometry(f"+{int(new_x)}+{int(new_y)}")
+                self._position_input_popup()
+        self.root.after(PHYSICS_TICK_MS, self._physics_tick)
+
+    def _advance_wander(self, x: int, w: int, dt: float) -> float:
+        """落地時偶爾隨機左右滑動一小段，讓她感覺「活著」，不是釘死在原地——
+        沿用現有靜態立繪左右翻轉表示方向（見 _current_frame），不是真的走路
+        分格動畫。忙碌中（生成回覆）或輸入列開著的時候暫停倒數/移動，才不會
+        聊到一半人就走掉。"""
+        if self._busy or self._input_popup is not None:
+            return x
+        if self._walk_seconds_left > 0:
+            self._walk_seconds_left -= dt
+            step = WANDER_SPEED_PX_S * dt * (1 if self._facing == "right" else -1)
+            screen_w = self.root.winfo_screenwidth()
+            new_x = max(0, min(x + step, screen_w - w))
+            if new_x == x:
+                self._walk_seconds_left = 0.0  # 撞到螢幕邊界了，提早結束這次漫遊
+            return new_x
+        if time.monotonic() >= self._next_wander_at:
+            self._start_wander()
+        return x
+
+    def _start_wander(self) -> None:
+        self._facing = random.choice(("left", "right"))
+        self.avatar_label.configure(image=self._current_frame(is_open=False))
+        self._walk_seconds_left = random.uniform(WANDER_MIN_DURATION_SEC, WANDER_MAX_DURATION_SEC)
+        self._next_wander_at = time.monotonic() + random.uniform(WANDER_MIN_INTERVAL_SEC, WANDER_MAX_INTERVAL_SEC)
+
+    def _current_frame(self, is_open: bool):
+        if self._facing == "left":
+            return self.frame_open_l if is_open else self.frame_closed_l
+        return self.frame_open if is_open else self.frame_closed
 
     def _on_avatar_right_click(self, event: tk.Event) -> None:
         self._context_menu.tk_popup(event.x_root, event.y_root)
@@ -494,7 +598,8 @@ class CharacterWindow:
 
         x, y = self.root.winfo_x(), self.root.winfo_y()
         self.frame_closed, self.frame_open, avatar_height = _load_avatar_frames(self._avatar_width)
-        self.avatar_label.configure(image=self.frame_closed)
+        self.frame_closed_l, self.frame_open_l, _ = _load_avatar_frames(self._avatar_width, mirror=True)
+        self.avatar_label.configure(image=self._current_frame(is_open=False))
         self.root.geometry(f"{self._avatar_width}x{avatar_height}+{x}+{y}")
         self.dialogue_label.configure(wraplength=self._avatar_width - 24)
         self._position_input_popup()
@@ -893,7 +998,7 @@ class CharacterWindow:
                     self._append_history("系統", payload)
                     self._set_dialogue(payload, is_status=True)
                 elif kind == "mouth":
-                    self.avatar_label.configure(image=self.frame_open if payload else self.frame_closed)
+                    self.avatar_label.configure(image=self._current_frame(is_open=payload))
                 if kind in ("error", "done"):
                     self._busy = False
         except queue.Empty:
