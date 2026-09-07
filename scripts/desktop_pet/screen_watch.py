@@ -1,15 +1,33 @@
-"""螢幕讀取：讓桌寵能偶爾看一眼螢幕、把畫面轉成一句文字描述，給
-desktop_pet.py 的背景主動搭話迴圈使用。規劃見 TTS通用平台_專案規劃.md 10.5。
+"""螢幕讀取功能。
 
-看圖跟平常對話刻意分成兩個模型（見規劃文件 10.5.1 的取捨說明）：這裡只負責
-「螢幕截圖 → 文字描述」，不負責生成角色會怎麼講、也不負責決定要不要主動開口，
-那些交給呼叫端（desktop_pet.py）用現有的 chat_ja + persona.md 處理，角色的
-語氣/人設才會維持一致，不會因為換了看圖模型就講話變調。
+讓桌寵能偶爾看一眼使用者的螢幕、把畫面轉成一句文字描述，提供給
+desktop_pet.py 裡「背景主動搭話」的迴圈使用。完整規劃詳見
+TTS通用平台_專案規劃.md 第 10.5 節。
 
-隱私設計（見規劃文件 10.5.3）：擷取螢幕前先檢查目前作用中視窗的標題／程式
-名稱，命中黑名單就直接跳過，連截圖都不產生——不做「AI 判斷這張圖敏不敏感」，
-因為連 Microsoft Recall 那種規模的團隊都做不準，純字串比對可靠得多。
+## 為什麼「看圖」跟「平常對話」要分成兩個模型
+
+（詳細取捨說明見規劃文件 10.5.1 節）
+
+這支模組只負責「螢幕截圖 -> 文字描述」這一步，不負責生成角色會怎麼
+講這段描述、也不負責決定「現在要不要主動開口跟使用者說話」。
+
+這些後續的判斷，全部交給呼叫端（desktop_pet.py）用既有的
+chat_ja + persona.md 那一套邏輯去處理。這樣角色的語氣與人設才能
+維持一致，不會因為換了一個看圖用的視覺模型，講出來的話風格就跟著
+跑掉——看圖模型只負責「看懂畫面」，角色的「嘴」還是同一張嘴。
+
+## 隱私設計
+
+（詳細說明見規劃文件 10.5.3 節）
+
+在真正擷取螢幕畫面之前，會先檢查目前作用中視窗的標題／程式名稱，
+只要命中黑名單，就直接跳過整個流程，連截圖這個動作本身都不會發生。
+
+這裡刻意不做「讓 AI 自己判斷這張截圖敏不敏感」這種設計，因為就連
+Microsoft Recall 那種規模的團隊都做不準這件事，用單純的字串比對
+黑名單反而可靠得多、也更容易讓使用者理解與信任這個機制。
 """
+
 import base64
 import io
 import json
@@ -30,6 +48,11 @@ from common.env import load_dotenv  # noqa: E402
 
 load_dotenv()
 
+
+# ============================================================
+# 環境變數 / 設定值
+# ============================================================
+
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/chat")
 VISION_MODEL = os.environ.get("SCREEN_WATCH_VISION_MODEL", "qwen3-vl:2b")
 
@@ -40,9 +63,9 @@ _CAPTION_PROMPT = (
     "什麼字、什麼標題、什麼畫面內容。用繁體中文回答，2-3 句話。"
 )
 
-# 預設黑名單只給幾個常見類別當起點，使用者可以透過
+# 預設黑名單只涵蓋幾個常見類別當作起點。使用者可以透過環境變數
 # SCREEN_WATCH_BLOCKED_PROCESSES / SCREEN_WATCH_BLOCKED_TITLE_KEYWORDS
-# （逗號分隔）自行擴充，見 .env.example
+# （逗號分隔多個值）自行擴充，詳見 .env.example。
 _DEFAULT_BLOCKED_PROCESSES = {
     "keepass.exe", "keepassxc.exe", "1password.exe", "bitwarden.exe",
     "lastpass.exe", "protonpass.exe",
@@ -53,22 +76,36 @@ _DEFAULT_BLOCKED_TITLE_KEYWORDS = {
 
 
 def _extra_from_env(var_name: str) -> set:
+    """把環境變數裡逗號分隔的字串，轉成小寫、去除空白的集合。"""
     raw = os.environ.get(var_name, "")
     return {item.strip().lower() for item in raw.split(",") if item.strip()}
 
 
 def _blocked_processes() -> set:
+    """回傳目前生效的完整程式黑名單（預設清單 + 使用者自訂擴充）。"""
     return _DEFAULT_BLOCKED_PROCESSES | _extra_from_env("SCREEN_WATCH_BLOCKED_PROCESSES")
 
 
 def _blocked_title_keywords() -> set:
+    """回傳目前生效的完整標題關鍵字黑名單（預設清單 + 使用者自訂擴充）。"""
     return _DEFAULT_BLOCKED_TITLE_KEYWORDS | _extra_from_env("SCREEN_WATCH_BLOCKED_TITLE_KEYWORDS")
 
 
+# ============================================================
+# 目前作用中視窗的資訊查詢
+# ============================================================
+
+
 def _foreground_window_info() -> tuple[str, str, str]:
-    """回傳 (視窗標題, 程式檔名, 視窗類別名稱)，標題/程式檔名轉小寫方便比對；
-    任何一步失敗就回傳空字串，當作「查不到就不要冒險」，交給呼叫端決定要不要
-    照樣繼續。"""
+    """查詢目前作用中視窗的資訊。
+
+    回傳 (視窗標題, 程式檔名, 視窗類別名稱) 這個 tuple，其中標題與
+    程式檔名都會轉成小寫，方便後續跟黑名單做不分大小寫的比對。
+
+    只要任何一個步驟查詢失敗（例如 API 呼叫出錯、找不到對應行程），
+    就整組回傳空字串——這是刻意採取「查不到資訊就當作有風險」的
+    保守策略，把「要不要冒險繼續」的決定權交給呼叫端。
+    """
     try:
         hwnd = win32gui.GetForegroundWindow()
         title = win32gui.GetWindowText(hwnd) or ""
@@ -80,27 +117,41 @@ def _foreground_window_info() -> tuple[str, str, str]:
     return title.lower(), process_name.lower(), class_name
 
 
-# 桌面本體／工作列／開始鍵這幾個「殼」視窗不算隱私考量，是另一種排除理由：
-# 截了也只會拍到桌布或工作列，看圖模型只會生出「使用者在看桌面」這種空泛
-# 描述，直接跳過，省一次沒意義的看圖呼叫
+# 桌面本體／工作列／開始鍵這幾個「殼」視窗，被排除的理由跟隱私無關，
+# 是另一種考量：就算截了圖，也只會拍到桌布或工作列這種畫面，
+# 看圖模型只會生出「使用者在看桌面」這種空泛描述，直接跳過可以省下
+# 一次沒有意義的看圖呼叫（連帶省下對應的運算資源與延遲）。
 _SHELL_WINDOW_CLASSES = {"Progman", "WorkerW", "Shell_TrayWnd", "Button"}
 
 
 def is_capture_blocked() -> bool:
-    """目前作用中的視窗是否命中黑名單（程式名稱、標題關鍵字，或桌面/工作列殼
-    視窗）。查不到視窗資訊（API 呼叫失敗）也視為封鎖，寧可少看一次，不要在
-    不確定的情況下硬拍。"""
+    """判斷目前作用中的視窗是否應該被排除、不進行螢幕擷取。
+
+    命中以下任何一種情況，就會回傳 True（代表這次應該跳過）：
+    - 完全查不到視窗資訊（標題、程式名稱都是空字串）
+    - 是桌面本體／工作列／開始鍵這類「殼」視窗
+    - 程式檔名命中程式黑名單
+    - 視窗標題包含黑名單裡的關鍵字
+    """
     title, process_name, class_name = _foreground_window_info()
+
     if not title and not process_name:
         return True
     if class_name in _SHELL_WINDOW_CLASSES:
         return True
     if process_name in _blocked_processes():
         return True
+
     return any(keyword in title for keyword in _blocked_title_keywords())
 
 
+# ============================================================
+# 擷取螢幕 + 呼叫視覺模型生成描述
+# ============================================================
+
+
 def _capture_screenshot_png_bytes() -> bytes:
+    """擷取目前整個螢幕畫面，回傳 PNG 格式的位元組資料。"""
     img = ImageGrab.grab()
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -108,11 +159,13 @@ def _capture_screenshot_png_bytes() -> bytes:
 
 
 class ScreenCaptureBlockedError(RuntimeError):
-    pass
+    """呼叫端想要在「這次擷取被隱私規則擋下」時，可以選擇拋出的例外類別。"""
 
 
 def _caption_image(image_bytes: bytes) -> str:
+    """把截圖丟給本地的視覺語言模型，取得一段文字描述。"""
     img_b64 = base64.b64encode(image_bytes).decode()
+
     payload = {
         "model": VISION_MODEL,
         "messages": [
@@ -120,25 +173,33 @@ def _caption_image(image_bytes: bytes) -> str:
         ],
         "stream": False,
     }
+
     req = urllib.request.Request(
         OLLAMA_URL,
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
         method="POST",
     )
+
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
             data = json.loads(resp.read())
     except urllib.error.URLError as e:
         raise RuntimeError(f"連不上本地 Ollama 服務，看圖失敗：{e}") from e
+
     return data["message"]["content"].strip()
 
 
 def look_at_screen() -> Optional[str]:
-    """看一眼螢幕、回傳文字描述；命中排除清單或任何一步失敗都回傳 None，
-    呼叫端看到 None 就當這次沒看、跳過這輪，不用特別處理錯誤訊息。"""
+    """看一眼螢幕，回傳文字描述。
+
+    只要命中隱私排除清單、或過程中任何一步發生錯誤，都會回傳 None——
+    呼叫端看到 None 時，就當作「這次沒看成」直接跳過這一輪即可，
+    不需要另外處理任何錯誤訊息或例外狀況。
+    """
     if is_capture_blocked():
         return None
+
     try:
         image_bytes = _capture_screenshot_png_bytes()
         return _caption_image(image_bytes)
