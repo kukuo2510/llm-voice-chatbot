@@ -35,3 +35,6 @@ Thumbs.db
 
 # === Claude Code 個人本機設定（路徑/權限因人而異，不共用）===
 .claude/settings.local.json
+
+# === 桌寵的多輪對話記憶（每台機器自己的聊天內容，不共用）===
+scripts/llm/.chat_history.json

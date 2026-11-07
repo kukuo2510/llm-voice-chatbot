@@ -124,7 +124,10 @@ def generate(text: str, output_path: str | None = None, tone: str = DEFAULT_TONE
         out = Path(output_path)
     else:
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        out = OUTPUT_DIR / f"{time.strftime('%Y%m%d_%H%M%S')}.wav"
+        # 檔名要精確到毫秒：分段合成時（見 tts_chunker.py）同一秒內會連續
+        # 產生好幾個檔案，只到秒的話後面的檔案會把前面的蓋掉。
+        millis = int(time.time() * 1000) % 1000
+        out = OUTPUT_DIR / f"{time.strftime('%Y%m%d_%H%M%S')}_{millis:03d}.wav"
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(audio_bytes)

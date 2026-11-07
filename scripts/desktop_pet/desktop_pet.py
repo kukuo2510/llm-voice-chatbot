@@ -13,8 +13,10 @@
   不是分開綁定的操作）。
 - 按住 F9 講話、放開結束：全域熱鍵，轉出來的文字會直接送出
   （取捨說明見下方 _on_ptt_transcribed）。
-- 右鍵角色：彈出選單（顯示/隱藏歷史紀錄、結束）——因為沒有標題列，
-  也就沒有內建的關閉鈕，結束程式要走這個選單。
+- 右鍵角色：彈出選單（顯示/隱藏歷史紀錄、分段播放、清除對話記憶、結束
+  等）——因為沒有標題列，也就沒有內建的關閉鈕，結束程式要走這個選單。
+- 對話記憶：角色會記得最近幾輪聊過的內容（重開程式也記得），
+  實作見 scripts/llm/conversation.py。
 - 重力／落地（實作見 desktop_physics.py）：放著不管會自己往下掉，
   落在工作列或其他視窗的上緣，不會呆呆飄在螢幕中間；右鍵選單可以
   隨時關掉這個效果。
@@ -96,7 +98,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "llm"))
 # 不需要重新啟動程式。
 import chat  # noqa: E402
 from chat import chat_ja, translate_zh  # noqa: E402
+from conversation import ConversationHistory  # noqa: E402
 from tts_infer import generate  # noqa: E402
+from tts_chunker import split_for_tts  # noqa: E402
 from tts_server import is_server_ready, start_server  # noqa: E402
 import stt  # noqa: E402
 from stt import PushToTalkRecorder  # noqa: E402
@@ -378,6 +382,20 @@ class CharacterWindow:
 
         prefs = _load_prefs()
 
+        # ---------- 多輪對話記憶（見 scripts/llm/conversation.py） ----------
+        # 角色會記得最近幾輪聊過的內容，重開程式也還記得（存在本機檔案）；
+        # 右鍵選單的「清除對話記憶」可以讓她整個忘掉、從頭開始。
+        self._conversation = ConversationHistory()
+
+        # ---------- 分段播放開關 ----------
+        # 開啟：台詞切段、第一段合成完就先播（第一個字出來得快，但這台機器
+        # GPT-SoVITS 合成速度跟播放速度差不多，段與段之間可能會停頓一下）。
+        # 關閉：跟以前一樣整段合成完才播（等比較久，但一口氣講完不會停頓）。
+        # 背景執行緒讀的是 self._chunked_tts 這個一般 bool，不直接讀 Tk 變數
+        # （Tk 變數只該在主執行緒存取）。
+        self._chunked_tts = prefs.get("chunked_tts", True)
+        self._chunked_tts_var = tk.BooleanVar(value=self._chunked_tts)
+
         # ---------- 立繪載入 ----------
         # 立繪寬度：有滾輪縮放記住的偏好就用那個，沒有就用 .env 的預設值。
         self._avatar_width = prefs.get("avatar_width", AVATAR_DISPLAY_WIDTH)
@@ -547,6 +565,13 @@ class CharacterWindow:
         # 而不是每一種可能的語言都硬塞進子選單裡。
         language_menu.add_command(label="自訂...", command=self._prompt_speech_language)
         self._context_menu.add_cascade(label="角色說話語言", menu=language_menu)
+
+        self._context_menu.add_checkbutton(
+            label="分段播放（先講先播）",
+            variable=self._chunked_tts_var,
+            command=self._on_chunked_tts_toggle,
+        )
+        self._context_menu.add_command(label="清除對話記憶", command=self._on_clear_memory)
 
         self._context_menu.add_separator()
         self._context_menu.add_command(label="結束", command=self._on_close)
@@ -1216,6 +1241,20 @@ class CharacterWindow:
         self._set_dialogue("...", is_status=True)
         threading.Thread(target=self._handle_message, args=(prompt_for_llm,), daemon=True).start()
 
+    def _on_chunked_tts_toggle(self) -> None:
+        """右鍵選單「分段播放」被點擊：下一句開始生效，並記住這次選擇。"""
+        self._chunked_tts = self._chunked_tts_var.get()
+        _save_prefs(chunked_tts=self._chunked_tts)
+
+    def _on_clear_memory(self) -> None:
+        """右鍵選單「清除對話記憶」：清掉角色記得的對話（含存檔），下一句從頭開始聊。
+
+        歷史紀錄視窗裡的文字不會跟著清掉——那是給使用者自己看的紀錄，
+        跟「角色記不記得」是兩件事。
+        """
+        self._conversation.clear()
+        self._set_dialogue("（對話記憶已清除）", is_status=True)
+
     def _on_close(self) -> None:
         """關閉程式：停止全域熱鍵監聽、收掉輸入列與歷史紀錄視窗，再關閉主視窗。"""
         self._ptt_listener.stop()
@@ -1225,54 +1264,91 @@ class CharacterWindow:
         self.root.destroy()
 
     def _handle_message(self, text: str) -> None:
-        """在背景執行緒裡處理一輪完整的對話：LLM 生成 -> 語音合成／翻譯 -> 播放。
+        """在背景執行緒裡處理一輪完整的對話：LLM 生成 -> 分段語音合成＋翻譯 -> 邊合成邊播放。
 
         所有結果都透過 self._task_queue 傳回主執行緒（見 _poll_queue），
         因為 Tkinter 的元件只能在主執行緒操作，背景執行緒不能直接更新畫面。
+
+        ## 分段合成、邊合成邊播放（參考 Project AIRI 的 speech pipeline）
+
+        以前是整段台詞合成完才開始播，台詞一長就要乾等。現在先用
+        split_for_tts() 把台詞切成幾段，由 _produce_audio 在背景一段一段
+        合成、丟進 audio_queue；這裡一拿到第一段就開始播放，播放的同時
+        下一段已經在合成了。使用者實際等待的時間只剩「第一段」的合成時間。
+
+        中文翻譯另外開一條執行緒跑，翻好就先顯示在對話框，不用等語音。
         """
         try:
-            reply = chat_ja(text)
+            reply = chat_ja(text, history=self._conversation)
         except Exception as e:
             self._task_queue.put(("error", f"對話生成失敗：{e}"))
             return
 
-        # 語音生成跟中文翻譯平行跑：播放／對嘴只需要 reply_speech 跟 tone，
-        # 不必等中文翻譯完成才能開始，這樣可以縮短使用者實際等待的時間。
-        result: dict = {}
-
-        def _run_generate():
-            try:
-                result["audio_path"] = generate(reply.reply_speech, None, reply.tone)
-            except Exception as e:
-                result["audio_error"] = e
-
-        def _run_translate():
-            try:
-                result["reply_zh"] = translate_zh(reply.reply_speech)
-            except Exception as e:
-                result["zh_error"] = e
-
-        t_gen = threading.Thread(target=_run_generate)
-        t_zh = threading.Thread(target=_run_translate)
-        t_gen.start()
+        # 翻譯跟語音合成平行跑：播放／對嘴只需要 reply_speech 跟 tone。
+        t_zh = threading.Thread(
+            target=self._translate_and_show, args=(reply.reply_speech,), daemon=True
+        )
         t_zh.start()
-        t_gen.join()
+
+        # 分段播放關閉時，整段當成「只有一段」走同一套流程，行為就跟以前一樣。
+        if self._chunked_tts:
+            chunks = split_for_tts(reply.reply_speech) or [reply.reply_speech]
+        else:
+            chunks = [reply.reply_speech]
+        audio_queue: "queue.Queue[tuple]" = queue.Queue()
+        threading.Thread(
+            target=self._produce_audio, args=(chunks, reply.tone, audio_queue), daemon=True
+        ).start()
+
+        # 依序播放每一段：queue.get() 會等到那一段合成完成才返回。
+        while True:
+            kind, payload = audio_queue.get()
+            if kind == "end":
+                break
+            if kind == "error":
+                self._task_queue.put(("error", f"語音生成失敗：{payload}"))
+                t_zh.join()
+                return
+
+            data, samplerate = payload
+            try:
+                play_for_avatar(data, samplerate, on_mouth=self._queue_mouth_state)
+            except Exception as e:
+                print(f"[desktop_pet] 播放失敗：{e}")
+
+        # 等翻譯也結束才解除忙碌，避免下一輪對話開始後，上一輪的翻譯才姍姍來遲
+        # 蓋掉新的對話框內容。
         t_zh.join()
+        self._task_queue.put(("done", None))
 
-        if "audio_error" in result:
-            self._task_queue.put(("error", f"語音生成失敗：{result['audio_error']}"))
-            return
-
-        reply_zh = result.get("reply_zh") or f"（翻譯失敗：{result.get('zh_error')}）"
+    def _translate_and_show(self, reply_speech: str) -> None:
+        """背景執行緒：把角色台詞翻成中文，翻好就送去主執行緒顯示並記進歷史紀錄。"""
+        try:
+            reply_zh = translate_zh(reply_speech)
+        except Exception as e:
+            reply_zh = f"（翻譯失敗：{e}）"
         self._task_queue.put(("reply", reply_zh))
 
-        try:
-            data, samplerate = sf.read(str(result["audio_path"]), dtype="float32")
-            play_for_avatar(data, samplerate, on_mouth=self._queue_mouth_state)
-        except Exception as e:
-            print(f"[desktop_pet] 播放失敗：{e}")
+    @staticmethod
+    def _produce_audio(chunks: list, tone: str, audio_queue: "queue.Queue[tuple]") -> None:
+        """背景執行緒：一段一段合成語音，合成好的音訊資料依序丟進 audio_queue。
 
-        self._task_queue.put(("done", None))
+        放進佇列的是「已經讀進記憶體的音訊資料」而不是檔案路徑——
+        tts_infer 只會保留最新幾個輸出檔，段落一多，還沒播到的檔案
+        有可能先被清掉，先讀進記憶體就沒有這個問題。
+
+        佇列裡的訊息：("audio", (data, samplerate))、("error", 例外)、("end", None)。
+        某一段合成失敗就停止，後面的段落不再合成。
+        """
+        for chunk in chunks:
+            try:
+                path = generate(chunk, None, tone)
+                data, samplerate = sf.read(str(path), dtype="float32")
+            except Exception as e:
+                audio_queue.put(("error", e))
+                return
+            audio_queue.put(("audio", (data, samplerate)))
+        audio_queue.put(("end", None))
 
     def _queue_mouth_state(self, is_open: bool) -> None:
         """播放執行緒呼叫：把嘴巴開合狀態送進佇列，交給主執行緒更新畫面。"""

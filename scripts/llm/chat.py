@@ -47,6 +47,7 @@ TTS（語音合成）只吃得到 `reply_speech` 跟 `tone` 這兩個欄位，
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -57,6 +58,7 @@ from pydantic import BaseModel, ValidationError
 # 讓這支腳本不管從哪個目錄被執行，都能找到同一層的 common/ 套件。
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common.env import load_dotenv  # noqa: E402
+from conversation import ConversationHistory, format_time_prefix  # noqa: E402
 
 load_dotenv()
 
@@ -67,6 +69,13 @@ load_dotenv()
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/chat")
 MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:14b")
+
+# Ollama 的 context 長度（token 數）。有了多輪對話記憶（見 conversation.py）
+# 之後，提示詞會比以前長很多：人設＋格式說明＋最近十幾輪對話。Ollama 預設的
+# context 長度不夠時，會「無聲地」把最前面的內容截掉——最前面剛好是系統提示詞
+# （人設），角色會突然忘記自己是誰。所以這裡明確指定大一點的值。
+# 代價是 KV cache 會多吃一些顯示記憶體，記憶體吃緊時可以調小。
+OLLAMA_NUM_CTX = int(os.environ.get("OLLAMA_NUM_CTX", "8192"))
 
 # 角色開口說話用的語言。換角色、換語言時，只需要改這個環境變數的值，
 # 不需要去碰下面任何提示詞模板的程式碼。
@@ -137,7 +146,9 @@ def _reply_speech_field_instructions() -> str:
 def _build_output_format_instructions() -> str:
     """組出完整版（含中文翻譯欄位）的輸出格式提示詞。"""
     return f"""
-使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
+使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、
+距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。
+你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
   "reply_speech": "{_reply_speech_field_instructions()}",
   "reply_zh": "reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙",
@@ -154,7 +165,9 @@ def _build_speech_only_output_format_instructions() -> str:
     開始播放前的等待時間。
     """
     return f"""
-使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
+使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、
+距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。
+你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
   "reply_speech": "{_reply_speech_field_instructions()}",
   "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
@@ -266,6 +279,11 @@ def _call_ollama(messages: list[dict], *, json_format: bool, timeout: int = 120)
         "model": MODEL,
         "messages": messages,
         "stream": False,
+        # gemma4 等新模型預設會先「思考」再回答，不關掉的話每句要多等 3～7 倍時間
+        # （2026-10-10 實測 gemma4:12b：關掉約 6 秒、沒關 15～46 秒）。
+        # 桌寵對話不需要推理，沒有思考功能的舊模型收到這個參數也會直接忽略。
+        "think": False,
+        "options": {"num_ctx": OLLAMA_NUM_CTX},
     }
     if json_format:
         payload["format"] = "json"
@@ -346,7 +364,11 @@ def _call_llm(messages: list[dict], *, json_format: bool, timeout: int = 120) ->
 # ============================================================
 
 
-def chat_ja(user_message: str, system_prompt: Optional[str] = None) -> SakikoReplyJa:
+def chat_ja(
+    user_message: str,
+    system_prompt: Optional[str] = None,
+    history: Optional[ConversationHistory] = None,
+) -> SakikoReplyJa:
     """只生成角色語言的回覆＋語氣標籤（給 TTS 用），不含中文翻譯，走最短路徑。
 
     注意：函式名沿用 chat_ja 只是歷史命名，實際使用的語言是由
@@ -355,25 +377,45 @@ def chat_ja(user_message: str, system_prompt: Optional[str] = None) -> SakikoRep
     system_prompt 若沒有指定，會在呼叫當下現場組出來（呼叫
     _build_speech_only_output_format_instructions()），確保吃到的是
     當下最新的語言設定，而不是一份過時、寫死語言的提示詞。
+
+    history（多輪對話記憶，見 conversation.py）：
+    - 有給的話，會把最近幾輪對話一起送給 LLM，角色才記得剛剛聊過什麼；
+      生成成功之後，這一輪也會自動記進 history。
+    - 沒給（None）的話，行為跟以前一樣：每次都是全新對話，不記任何東西。
+    - 生成失敗（格式錯誤、連線失敗）的那一輪不會被記進去，
+      避免壞掉的回覆留在歷史裡、把之後的回覆也帶偏。
     """
     if system_prompt is None:
         system_prompt = (
             _load_persona_text() + "\n" + _build_speech_only_output_format_instructions()
         )
 
-    raw_content = _call_llm(
-        [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
-        json_format=True,
-    )
+    now = time.time()
+    messages = [{"role": "system", "content": system_prompt}]
+    if history is not None:
+        messages += history.to_messages()
+    # 使用者訊息一律加時間前綴（格式說明見 conversation.format_time_prefix），
+    # 系統提示詞裡已經告訴模型這個標記的意思、不要照抄。
+    messages.append({"role": "user", "content": format_time_prefix(now) + user_message})
+
+    raw_content = _call_llm(messages, json_format=True)
 
     try:
         parsed = json.loads(raw_content)
-        return SakikoReplyJa(**parsed)
+        reply = SakikoReplyJa(**parsed)
     except (json.JSONDecodeError, ValidationError) as e:
         raise ValueError(f"LLM 回傳的格式不符預期，原始內容：{raw_content!r}") from e
+
+    if history is not None:
+        # 存「整理過的 JSON」而不是原始字串：原始字串可能夾雜多餘欄位或空白，
+        # 存乾淨的版本，下一輪模型看到的歷史格式才會穩定一致。
+        history.add_turn(
+            user_message,
+            json.dumps(reply.model_dump(), ensure_ascii=False),
+            now,
+        )
+
+    return reply
 
 
 def translate_zh(reply_speech: str) -> str:
