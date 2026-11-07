@@ -106,6 +106,7 @@ import stt  # noqa: E402
 from stt import PushToTalkRecorder  # noqa: E402
 from screen_watch import look_at_screen  # noqa: E402
 import desktop_physics  # noqa: E402
+import livliv_link  # noqa: E402
 
 # 角色無關的「殼」邏輯（視窗去背色鍵、立繪載入／縮放、螢幕擷取排除），
 # 跟 desktop_pet_reactive.py 共用，詳細說明見 pet_shell.py。
@@ -351,6 +352,7 @@ def play_for_avatar(data: np.ndarray, samplerate: int, on_mouth=None) -> None:
 
         mouth_thread = threading.Thread(target=_run_mouth_clock)
 
+    livliv_link.send_clip(data, samplerate)
     for t in threads:
         t.start()
     if mouth_thread:
@@ -417,6 +419,10 @@ class CharacterWindow:
         root.configure(bg=MAGIC_TRANSPARENT_COLOR)
         root.wm_attributes("-transparentcolor", MAGIC_TRANSPARENT_COLOR)
         root.geometry(f"{self._avatar_width}x{avatar_height}+120+120")
+        if livliv_link.ENABLED:
+            # 角色由舞台視窗畫，這個視窗看不見。不用 withdraw：
+            # 語言設定等 transient 對話框會跟著主視窗一起被藏起來。
+            root.attributes("-alpha", 0)
         root.update_idletasks()
         self._hwnd = exclude_self_from_screen_capture(root.winfo_id())
 
@@ -589,6 +595,11 @@ class CharacterWindow:
         self._task_queue: "queue.Queue[tuple[str, object]]" = queue.Queue()
         self.root.after(50, self._poll_queue)
         self.root.after(PHYSICS_TICK_MS, self._physics_tick)
+
+        if livliv_link.ENABLED:
+            self._physics_enabled_var.set(False)  # 舞台視窗目前沒有重力，看不見的視窗也不用掉
+            root.geometry("1x1+120+120")
+            livliv_link.listen(lambda event: self._task_queue.put(("stage", event)))
 
         # ---------- Push-to-talk：全域熱鍵 ----------
         # 錄音／轉文字都在背景執行緒跑，不會卡住視窗主執行緒。
@@ -931,6 +942,7 @@ class CharacterWindow:
         """更新對話框內容，並依 is_status 切換文字顏色（正式台詞 vs. 系統狀態）。"""
         self.dialogue_var.set(text)
         self.dialogue_label.configure(fg=COLOR_STATUS_TEXT if is_status else COLOR_TEXT)
+        livliv_link.send_say(text, is_status)
 
         if not is_status:
             self._last_reply_text = text
@@ -957,13 +969,24 @@ class CharacterWindow:
 
     def _on_key_press(self, key) -> None:
         """全域鍵盤事件：按下 push-to-talk 熱鍵時開始錄音（忙碌中不接受新錄音）。"""
-        if key == PUSH_TO_TALK_KEY and not self._busy:
+        if key != PUSH_TO_TALK_KEY:
+            return
+        if self._busy:
+            print(f"[ptt] 按下 {PUSH_TO_TALK_KEY_LABEL}，但還在處理上一句，忽略")
+            return
+        # pynput 的 callback 丟出例外時監聽會默默結束，之後熱鍵就完全沒反應，所以這裡要接住。
+        try:
             self._ptt_recorder.start()
+        except Exception as e:
+            print(f"[ptt] 開始錄音失敗：{e!r}")
 
     def _on_key_release(self, key) -> None:
         """全域鍵盤事件：放開 push-to-talk 熱鍵時停止錄音。"""
         if key == PUSH_TO_TALK_KEY:
-            self._ptt_recorder.stop()
+            try:
+                self._ptt_recorder.stop()
+            except Exception as e:
+                print(f"[ptt] 停止錄音失敗：{e!r}")
 
     def _on_ptt_state_change(self, recording: bool) -> None:
         """錄音狀態改變時，更新對話框顯示的狀態文字。"""
@@ -1021,6 +1044,9 @@ class CharacterWindow:
             if not pending:
                 continue
             if self._busy or self._input_popup is not None:
+                if time.monotonic() - last_check >= SCREEN_WATCH_INTERVAL_SEC + 60:
+                    print(f"[screen_watch] 等了超過一分鐘還不能看：busy={self._busy}")
+                    last_check = time.monotonic() - SCREEN_WATCH_INTERVAL_SEC
                 continue
 
             last_check = time.monotonic()
@@ -1261,6 +1287,7 @@ class CharacterWindow:
         self._hide_input_popup()
         if self._history_window is not None:
             self._history_window.destroy()
+        livliv_link.send_quit()
         self.root.destroy()
 
     def _handle_message(self, text: str) -> None:
@@ -1354,6 +1381,17 @@ class CharacterWindow:
         """播放執行緒呼叫：把嘴巴開合狀態送進佇列，交給主執行緒更新畫面。"""
         self._task_queue.put(("mouth", is_open))
 
+    def _on_stage_event(self, event: dict) -> None:
+        """處理舞台視窗傳來的操作：打字送出、右鍵開選單、點選單項目。"""
+        if event.get("event") == "text":
+            self._submit(str(event.get("text", "")).strip())
+        elif event.get("event") == "menu":
+            # 看不見的主視窗移到游標旁，語言設定這類對話框才會開在角色附近。
+            self.root.geometry(f"1x1+{int(event['x'])}+{int(event['y'])}")
+            livliv_link.send_menu(livliv_link.describe_menu(self._context_menu))
+        elif event.get("event") == "menuitem":
+            livliv_link.invoke_menu(self._context_menu, event["path"])
+
     def _poll_queue(self) -> None:
         """主執行緒定時輪詢背景執行緒送來的事件，並依種類更新畫面或狀態。"""
         try:
@@ -1367,6 +1405,8 @@ class CharacterWindow:
                     self._set_dialogue(payload, is_status=True)
                 elif kind == "mouth":
                     self.avatar_label.configure(image=self._current_frame(is_open=payload))
+                elif kind == "stage":
+                    self._on_stage_event(payload)
 
                 if kind in ("error", "done"):
                     self._busy = False

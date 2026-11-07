@@ -190,6 +190,9 @@ def _caption_image(image_bytes: bytes) -> str:
     return data["message"]["content"].strip()
 
 
+_last_skipped_window = None
+
+
 def look_at_screen() -> Optional[str]:
     """看一眼螢幕，回傳文字描述。
 
@@ -197,8 +200,15 @@ def look_at_screen() -> Optional[str]:
     呼叫端看到 None 時，就當作「這次沒看成」直接跳過這一輪即可，
     不需要另外處理任何錯誤訊息或例外狀況。
     """
+    global _last_skipped_window
     if is_capture_blocked():
+        # 同一個視窗只印一次，不然停在桌面時每 20 秒都會洗一行。
+        title, process_name, class_name = _foreground_window_info()
+        if (process_name, title) != _last_skipped_window:
+            _last_skipped_window = (process_name, title)
+            print(f"[screen_watch] 這個視窗不看：{process_name or '未知'}｜{class_name}｜{title}")
         return None
+    _last_skipped_window = None
 
     try:
         image_bytes = _capture_screenshot_png_bytes()
