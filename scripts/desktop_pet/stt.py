@@ -63,6 +63,10 @@ load_dotenv()
 
 SENSEVOICE_MODEL = "iic/SenseVoiceSmall"
 
+# auto 在聲音小或很短時會亂猜語言（曾把雜音辨識成韓文「그.」）。
+# 想講別的語言：.env 設 SENSEVOICE_LANGUAGE=ja／en／auto。
+SENSEVOICE_LANGUAGE = os.environ.get("SENSEVOICE_LANGUAGE", "zh").strip().lower()
+
 # SenseVoice 跟 Whisper 系列模型都是吃 16kHz 單聲道的音訊輸入。
 RECORD_SAMPLE_RATE = 16000
 
@@ -215,7 +219,7 @@ def transcribe(audio: np.ndarray) -> str:
 
     print("[stt] 語音辨識走本地 SenseVoice")
     model = _get_model()
-    results = model.generate(input=audio, language="auto", use_itn=True, cache={})
+    results = model.generate(input=audio, language=SENSEVOICE_LANGUAGE, use_itn=True, cache={})
 
     if not results:
         return ""
@@ -245,6 +249,7 @@ class PushToTalkRecorder:
         self._on_transcribed = on_transcribed
         self._on_state_change = on_state_change or (lambda recording: None)
         self._device = device if device is not None else _resolve_input_device()
+        print(f"[stt] 錄音裝置：{sd.query_devices(self._device)['name'] if self._device is not None else '系統預設'}")
         self._stream: Optional[sd.InputStream] = None
         self._frames: list = []
         self._lock = threading.Lock()
@@ -255,7 +260,6 @@ class PushToTalkRecorder:
         with self._lock:
             if self._recording:
                 return
-            self._recording = True
             self._frames = []
             self._stream = sd.InputStream(
                 samplerate=RECORD_SAMPLE_RATE,
@@ -265,7 +269,10 @@ class PushToTalkRecorder:
                 callback=self._callback,
             )
             self._stream.start()
+            # 麥克風真的開好才算錄音中，不然開失敗後每次按熱鍵都會被當成「已在錄音」而忽略。
+            self._recording = True
 
+        print("[stt] 開始錄音")
         self._on_state_change(True)
 
     def stop(self) -> None:
@@ -292,6 +299,10 @@ class PushToTalkRecorder:
             return
 
         audio = np.concatenate(frames, axis=0).flatten()
+        print(
+            f"[stt] 錄到 {len(audio) / RECORD_SAMPLE_RATE:.1f} 秒，"
+            f"平均音量 {float(np.sqrt(np.mean(audio ** 2))):.4f}，峰值 {float(np.abs(audio).max()):.4f}"
+        )
         if len(audio) / RECORD_SAMPLE_RATE < MIN_DURATION_SEC:
             # 錄音時間太短，大概是誤按，直接放棄這次錄音。
             return
@@ -302,6 +313,7 @@ class PushToTalkRecorder:
             except Exception as e:
                 print(f"[stt] 轉文字失敗：{e}")
                 return
+            print(f"[stt] 辨識結果：{text!r}")
             if text:
                 self._on_transcribed(text)
 

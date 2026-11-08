@@ -47,6 +47,7 @@ TTS（語音合成）只吃得到 `reply_speech` 跟 `tone` 這兩個欄位，
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -57,6 +58,9 @@ from pydantic import BaseModel, ValidationError
 # 讓這支腳本不管從哪個目錄被執行，都能找到同一層的 common/ 套件。
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common.env import load_dotenv  # noqa: E402
+from conversation import ConversationHistory, format_time_prefix  # noqa: E402
+import expressions  # noqa: E402  表情標記的詞表（說明給模型看）
+import web_lookup  # noqa: E402  〔查：…〕上網查的說明
 
 load_dotenv()
 
@@ -67,6 +71,13 @@ load_dotenv()
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/chat")
 MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:14b")
+
+# Ollama 的 context 長度（token 數）。有了多輪對話記憶（見 conversation.py）
+# 之後，提示詞會比以前長很多：人設＋格式說明＋最近十幾輪對話。Ollama 預設的
+# context 長度不夠時，會「無聲地」把最前面的內容截掉——最前面剛好是系統提示詞
+# （人設），角色會突然忘記自己是誰。所以這裡明確指定大一點的值。
+# 代價是 KV cache 會多吃一些顯示記憶體，記憶體吃緊時可以調小。
+OLLAMA_NUM_CTX = int(os.environ.get("OLLAMA_NUM_CTX", "8192"))
 
 # 角色開口說話用的語言。換角色、換語言時，只需要改這個環境變數的值，
 # 不需要去碰下面任何提示詞模板的程式碼。
@@ -83,6 +94,17 @@ OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 # TONE_REFS 是對應的——這裡列出的每一種語氣，都要能在那邊找到
 # 對應的參考音檔，否則 TTS 端會找不到參考音檔可用。
 TONE_OPTIONS = ["neutral", "happy", "serious", "hesitant", "intense"]
+
+# 語氣欄位的說明。serious 的參考音檔是五個裡最低沉的（約 243 Hz），
+# 原本只寫「依情緒基調選」時，高傲的角色加上一直吐槽螢幕，模型有一半以上的句子都選 serious，
+# 聽起來整天都很陰沉（2026-11-08 量過最近 20 句，12 句在 240～250 Hz）。
+# 所以把 serious 限定在真的生氣、訓人的時候，其他拿不準的一律 neutral。
+_TONE_FIELD_INSTRUCTIONS = (
+    "這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／"
+    "happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；"
+    "高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／"
+    "hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）"
+)
 
 # 角色人設放在 characters/<角色>/persona.md，要改台詞風格/個性設定，
 # 直接編輯那個檔案就好，不用碰這支程式碼。
@@ -131,17 +153,21 @@ def _reply_speech_field_instructions() -> str:
         f"字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成{lang}裡"
         f"道地的講法——如果是{lang}沒有的外來語詞彙，要轉換成{lang}的外來語發音寫法，不能"
         f"照抄原文字母；寫完之後自己檢查一遍，確認整句都是{lang}才輸出"
+        + expressions.instructions()
+        + web_lookup.instructions()
     )
 
 
 def _build_output_format_instructions() -> str:
     """組出完整版（含中文翻譯欄位）的輸出格式提示詞。"""
     return f"""
-使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
+使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、
+距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。
+你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
   "reply_speech": "{_reply_speech_field_instructions()}",
   "reply_zh": "reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙",
-  "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
+  "tone": "{_TONE_FIELD_INSTRUCTIONS}"
 }}
 """
 
@@ -154,10 +180,12 @@ def _build_speech_only_output_format_instructions() -> str:
     開始播放前的等待時間。
     """
     return f"""
-使用者會用中文輸入。你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
+使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、
+距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。
+你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
   "reply_speech": "{_reply_speech_field_instructions()}",
-  "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
+  "tone": "{_TONE_FIELD_INSTRUCTIONS}"
 }}
 """
 
@@ -266,6 +294,11 @@ def _call_ollama(messages: list[dict], *, json_format: bool, timeout: int = 120)
         "model": MODEL,
         "messages": messages,
         "stream": False,
+        # gemma4 等新模型預設會先「思考」再回答，不關掉的話每句要多等 3～7 倍時間
+        # （2026-10-10 實測 gemma4:12b：關掉約 6 秒、沒關 15～46 秒）。
+        # 桌寵對話不需要推理，沒有思考功能的舊模型收到這個參數也會直接忽略。
+        "think": False,
+        "options": {"num_ctx": OLLAMA_NUM_CTX},
     }
     if json_format:
         payload["format"] = "json"
@@ -346,7 +379,11 @@ def _call_llm(messages: list[dict], *, json_format: bool, timeout: int = 120) ->
 # ============================================================
 
 
-def chat_ja(user_message: str, system_prompt: Optional[str] = None) -> SakikoReplyJa:
+def chat_ja(
+    user_message: str,
+    system_prompt: Optional[str] = None,
+    history: Optional[ConversationHistory] = None,
+) -> SakikoReplyJa:
     """只生成角色語言的回覆＋語氣標籤（給 TTS 用），不含中文翻譯，走最短路徑。
 
     注意：函式名沿用 chat_ja 只是歷史命名，實際使用的語言是由
@@ -355,25 +392,52 @@ def chat_ja(user_message: str, system_prompt: Optional[str] = None) -> SakikoRep
     system_prompt 若沒有指定，會在呼叫當下現場組出來（呼叫
     _build_speech_only_output_format_instructions()），確保吃到的是
     當下最新的語言設定，而不是一份過時、寫死語言的提示詞。
+
+    history（多輪對話記憶，見 conversation.py）：
+    - 有給的話，會把最近幾輪對話一起送給 LLM，角色才記得剛剛聊過什麼；
+      生成成功之後，這一輪也會自動記進 history。
+    - 沒給（None）的話，行為跟以前一樣：每次都是全新對話，不記任何東西。
+    - 生成失敗（格式錯誤、連線失敗）的那一輪不會被記進去，
+      避免壞掉的回覆留在歷史裡、把之後的回覆也帶偏。
     """
     if system_prompt is None:
         system_prompt = (
             _load_persona_text() + "\n" + _build_speech_only_output_format_instructions()
         )
 
-    raw_content = _call_llm(
-        [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
-        json_format=True,
+    now = time.time()
+    messages = [{"role": "system", "content": system_prompt}]
+    if history is not None:
+        messages += history.to_messages()
+    # 使用者訊息一律加時間前綴（格式說明見 conversation.format_time_prefix），
+    # 系統提示詞裡已經告訴模型這個標記的意思、不要照抄。
+    # 最後補一句講話語言的提醒：規則離生成的位置越遠越不被遵守，系統提示詞裡的語言要求
+    # 隔著一大串對話紀錄，常常輸給「歷史都是日文」「人設寫了日文口癖」的慣性（切成中文還是講日文、
+    # 講日文時夾中文詞都是這個原因）。只加在這次送出的訊息，不存進對話紀錄。
+    reminder = (
+        f"\n\n（reply_speech 只能用{CHARACTER_SPEECH_LANGUAGE}，不能夾雜其他語言；〔〕表情標記除外。"
+        "主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）"
     )
+    messages.append({"role": "user", "content": format_time_prefix(now) + user_message + reminder})
+
+    raw_content = _call_llm(messages, json_format=True)
 
     try:
         parsed = json.loads(raw_content)
-        return SakikoReplyJa(**parsed)
+        reply = SakikoReplyJa(**parsed)
     except (json.JSONDecodeError, ValidationError) as e:
         raise ValueError(f"LLM 回傳的格式不符預期，原始內容：{raw_content!r}") from e
+
+    if history is not None:
+        # 存「整理過的 JSON」而不是原始字串：原始字串可能夾雜多餘欄位或空白，
+        # 存乾淨的版本，下一輪模型看到的歷史格式才會穩定一致。
+        history.add_turn(
+            user_message,
+            json.dumps(reply.model_dump(), ensure_ascii=False),
+            now,
+        )
+
+    return reply
 
 
 def translate_zh(reply_speech: str) -> str:

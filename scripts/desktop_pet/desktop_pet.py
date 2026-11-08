@@ -13,8 +13,10 @@
   不是分開綁定的操作）。
 - 按住 F9 講話、放開結束：全域熱鍵，轉出來的文字會直接送出
   （取捨說明見下方 _on_ptt_transcribed）。
-- 右鍵角色：彈出選單（顯示/隱藏歷史紀錄、結束）——因為沒有標題列，
-  也就沒有內建的關閉鈕，結束程式要走這個選單。
+- 右鍵角色：彈出選單（顯示/隱藏歷史紀錄、分段播放、清除對話記憶、結束
+  等）——因為沒有標題列，也就沒有內建的關閉鈕，結束程式要走這個選單。
+- 對話記憶：角色會記得最近幾輪聊過的內容（重開程式也記得），
+  實作見 scripts/llm/conversation.py。
 - 重力／落地（實作見 desktop_physics.py）：放著不管會自己往下掉，
   落在工作列或其他視窗的上緣，不會呆呆飄在螢幕中間；右鍵選單可以
   隨時關掉這個效果。
@@ -73,6 +75,7 @@ import json
 import os
 import queue
 import random
+import socket
 import sys
 import threading
 import time
@@ -95,16 +98,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "llm"))
 # translate_zh、transcribe 每次呼叫都會讀當下的值，所以改完立刻生效，
 # 不需要重新啟動程式。
 import chat  # noqa: E402
+import expressions  # noqa: E402
+import web_lookup  # noqa: E402
 from chat import chat_ja, translate_zh  # noqa: E402
+from conversation import ConversationHistory  # noqa: E402
 from tts_infer import generate  # noqa: E402
+from tts_chunker import split_for_tts  # noqa: E402
 from tts_server import is_server_ready, start_server  # noqa: E402
 import stt  # noqa: E402
 from stt import PushToTalkRecorder  # noqa: E402
+import screen_watch  # noqa: E402  遊戲模式要改它的模組變數 game_mode
 from screen_watch import look_at_screen  # noqa: E402
 import desktop_physics  # noqa: E402
+import livliv_link  # noqa: E402
 
 # 角色無關的「殼」邏輯（視窗去背色鍵、立繪載入／縮放、螢幕擷取排除），
-# 跟 desktop_pet_reactive.py 共用，詳細說明見 pet_shell.py。
+# 抽出來是為了換角色時能共用，詳細說明見 pet_shell.py。
 from pet_shell import (  # noqa: E402
     MAGIC_TRANSPARENT_COLOR,
     exclude_self_from_screen_capture,
@@ -214,7 +223,23 @@ WANDER_MAX_DURATION_SEC = 3.0
 # 可以直接切換，不用進 .env 改。所有記住的偏好統一存進下面這個本機
 # 小檔案（_PET_PREFS_FILE）；不記住的話，下次開程式還是照 .env 的預設值。
 
-SCREEN_WATCH_INTERVAL_SEC = int(os.environ.get("SCREEN_WATCH_INTERVAL_SEC", "20"))
+SCREEN_WATCH_INTERVAL_SEC = int(os.environ.get("SCREEN_WATCH_INTERVAL_SEC", "45"))  # 2026-11-08 使用者覺得 20 秒太密，改 45
+
+# Claude Code 的 hook（scripts/desktop_pet/claude_hook.py）透過這個 UDP 埠通知桌寵：
+# Claude 在等主人確認權限、或做完一件比較久的工作。只聽本機。
+CLAUDE_EVENT_PORT = int(os.environ.get("CLAUDE_EVENT_PORT", "9892"))
+CLAUDE_EVENT_RETRY_MS = 2000  # 角色正在講話時，隔多久再試一次
+CLAUDE_EVENT_MAX_TRIES = 30  # 最多等一分鐘，還在忙就放棄這次通知
+_CLAUDE_EVENT_PROMPTS = {
+    "waiting": (
+        "（主人請來幫忙寫程式的 AI 助手 Claude 停下來了，在等主人按確認才能繼續，主人可能沒注意到。"
+        "用你平常的口吻提醒主人一句，要短，像是順口提醒，不要提到「通知」這類字眼。）"
+    ),
+    "done": (
+        "（主人請來幫忙寫程式的 AI 助手 Claude 剛把交辦的工作做完了，前後花了大約 {minutes} 分鐘。"
+        "用你平常的口吻跟主人說一聲，可以順便誇一下或吐槽一下，要短。）"
+    ),
+}
 _PET_PREFS_FILE = Path(__file__).resolve().parent / ".pet_prefs.json"
 
 _SCREEN_WATCH_PROMPT_TEMPLATE = (
@@ -225,6 +250,39 @@ _SCREEN_WATCH_PROMPT_TEMPLATE = (
     "**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西"
     "好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）"
 )
+# 前景視窗的標題和程式名稱，讓角色知道是哪款遊戲／哪個網站，用她知道的相關知識聊
+_SCREEN_WATCH_WINDOW_HINT = (
+    "（主人現在的視窗標題是「{title}」，程式是 {process}。如果認得出是哪款遊戲、哪部作品或哪個網站，"
+    "可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）"
+)
+# 畫面沒重看、沿用上次的描述時（遊戲模式最常見）：明講已經講過了，不然每 20 秒都會講同一句
+_SCREEN_WATCH_REPEAT_HINT = (
+    "（這是你剛才看過的同一個畫面，你已經針對它講過話了。這次**不要再講一樣的內容**，"
+    "換個角度：聊這款遊戲／這個東西本身、問主人進展、分享你的看法或感想，或閒聊別的；"
+    "句子開頭也不要跟你前幾句一樣。）"
+)
+
+
+# 自動查資料時跳過的一般程式：瀏覽器、編輯器、聊天軟體這類，標題一直變、也不是「一款遊戲／作品」
+_LOOKUP_SKIP_PROCESSES = {
+    "chrome.exe", "msedge.exe", "firefox.exe", "brave.exe", "opera.exe", "explorer.exe", "code.exe", "cursor.exe",
+    "windowsterminal.exe", "cmd.exe", "powershell.exe", "pwsh.exe", "notepad.exe", "notepad++.exe", "discord.exe",
+    "line.exe", "telegram.exe", "slack.exe", "teams.exe", "ms-teams.exe", "obsidian.exe", "winword.exe",
+    "excel.exe", "powerpnt.exe", "steam.exe", "steamwebhelper.exe", "spotify.exe", "claude.exe", "electron.exe",
+    "python.exe", "pythonw.exe", "taskmgr.exe", "applicationframehost.exe", "vlc.exe", "potplayermini64.exe",
+}
+_GAME_INFO_HINT = "（關於這個遊戲／作品，網路上查到的資料（可以參考，但用聊天的口吻講，不要照念）：{info}）"
+
+
+def _screen_watch_prompt(caption: str, look: dict, info: Optional[str] = None) -> str:
+    prompt = _SCREEN_WATCH_PROMPT_TEMPLATE.format(caption=caption)
+    if look.get("title") or look.get("process"):
+        prompt += _SCREEN_WATCH_WINDOW_HINT.format(title=look.get("title") or "（無）", process=look.get("process") or "未知")
+    if info:
+        prompt += _GAME_INFO_HINT.format(info=info)
+    if not look.get("fresh"):
+        prompt += _SCREEN_WATCH_REPEAT_HINT
+    return prompt
 
 
 def _load_prefs() -> dict:
@@ -347,6 +405,7 @@ def play_for_avatar(data: np.ndarray, samplerate: int, on_mouth=None) -> None:
 
         mouth_thread = threading.Thread(target=_run_mouth_clock)
 
+    livliv_link.send_clip(data, samplerate)
     for t in threads:
         t.start()
     if mouth_thread:
@@ -378,6 +437,20 @@ class CharacterWindow:
 
         prefs = _load_prefs()
 
+        # ---------- 多輪對話記憶（見 scripts/llm/conversation.py） ----------
+        # 角色會記得最近幾輪聊過的內容，重開程式也還記得（存在本機檔案）；
+        # 右鍵選單的「清除對話記憶」可以讓她整個忘掉、從頭開始。
+        self._conversation = ConversationHistory()
+
+        # ---------- 分段播放開關 ----------
+        # 開啟：台詞切段、第一段合成完就先播（第一個字出來得快，但這台機器
+        # GPT-SoVITS 合成速度跟播放速度差不多，段與段之間可能會停頓一下）。
+        # 關閉：跟以前一樣整段合成完才播（等比較久，但一口氣講完不會停頓）。
+        # 背景執行緒讀的是 self._chunked_tts 這個一般 bool，不直接讀 Tk 變數
+        # （Tk 變數只該在主執行緒存取）。
+        self._chunked_tts = prefs.get("chunked_tts", True)
+        self._chunked_tts_var = tk.BooleanVar(value=self._chunked_tts)
+
         # ---------- 立繪載入 ----------
         # 立繪寬度：有滾輪縮放記住的偏好就用那個，沒有就用 .env 的預設值。
         self._avatar_width = prefs.get("avatar_width", AVATAR_DISPLAY_WIDTH)
@@ -399,6 +472,10 @@ class CharacterWindow:
         root.configure(bg=MAGIC_TRANSPARENT_COLOR)
         root.wm_attributes("-transparentcolor", MAGIC_TRANSPARENT_COLOR)
         root.geometry(f"{self._avatar_width}x{avatar_height}+120+120")
+        if livliv_link.ENABLED:
+            # 角色由舞台視窗畫，這個視窗看不見。不用 withdraw：
+            # 語言設定等 transient 對話框會跟著主視窗一起被藏起來。
+            root.attributes("-alpha", 0)
         root.update_idletasks()
         self._hwnd = exclude_self_from_screen_capture(root.winfo_id())
 
@@ -445,6 +522,9 @@ class CharacterWindow:
         self._screen_watch_enabled = remembered if remembered is not None else False
         self._remember_screen_watch = remembered is not None
         self._screen_watch_var = tk.BooleanVar(value=self._screen_watch_enabled)
+        # 遊戲模式：同一個視窗停著時少看幾次螢幕，讓出顯示卡給遊戲（見 screen_watch.SCREEN_RELOOK_GAME_SEC）
+        screen_watch.game_mode = bool(prefs.get("game_mode", False))
+        self._game_mode_var = tk.BooleanVar(value=screen_watch.game_mode)
 
         # ---------- 對話／語音辨識供應商：偏好初始化 ----------
         # 記住的偏好會覆蓋 chat.py／stt.py 原本從 .env 讀到的值
@@ -473,6 +553,11 @@ class CharacterWindow:
             label="螢幕讀取主動搭話",
             variable=self._screen_watch_var,
             command=self._on_screen_watch_toggle,
+        )
+        self._context_menu.add_checkbutton(
+            label="遊戲模式（少看螢幕）",
+            variable=self._game_mode_var,
+            command=self._on_game_mode_toggle,
         )
         # 桌寵物理（重力／落地）目前是第一階段先試試看，還不確定好不好玩、
         # 會不會卡到其他操作，所以做成可以隨時關掉；這次先不記住選擇
@@ -548,6 +633,13 @@ class CharacterWindow:
         language_menu.add_command(label="自訂...", command=self._prompt_speech_language)
         self._context_menu.add_cascade(label="角色說話語言", menu=language_menu)
 
+        self._context_menu.add_checkbutton(
+            label="分段播放（先講先播）",
+            variable=self._chunked_tts_var,
+            command=self._on_chunked_tts_toggle,
+        )
+        self._context_menu.add_command(label="清除對話記憶", command=self._on_clear_memory)
+
         self._context_menu.add_separator()
         self._context_menu.add_command(label="結束", command=self._on_close)
 
@@ -565,6 +657,11 @@ class CharacterWindow:
         self.root.after(50, self._poll_queue)
         self.root.after(PHYSICS_TICK_MS, self._physics_tick)
 
+        if livliv_link.ENABLED:
+            self._physics_enabled_var.set(False)  # 舞台視窗目前沒有重力，看不見的視窗也不用掉
+            root.geometry("1x1+120+120")
+            livliv_link.listen(lambda event: self._task_queue.put(("stage", event)))
+
         # ---------- Push-to-talk：全域熱鍵 ----------
         # 錄音／轉文字都在背景執行緒跑，不會卡住視窗主執行緒。
         self._ptt_recorder = PushToTalkRecorder(
@@ -579,6 +676,7 @@ class CharacterWindow:
 
         # ---------- 螢幕讀取背景執行緒 ----------
         threading.Thread(target=self._screen_watch_loop, daemon=True).start()
+        threading.Thread(target=self._claude_event_loop, daemon=True).start()
         if remembered is None:
             self.root.after(300, self._prompt_screen_watch_choice)
 
@@ -906,6 +1004,7 @@ class CharacterWindow:
         """更新對話框內容，並依 is_status 切換文字顏色（正式台詞 vs. 系統狀態）。"""
         self.dialogue_var.set(text)
         self.dialogue_label.configure(fg=COLOR_STATUS_TEXT if is_status else COLOR_TEXT)
+        livliv_link.send_say(text, is_status)
 
         if not is_status:
             self._last_reply_text = text
@@ -932,13 +1031,24 @@ class CharacterWindow:
 
     def _on_key_press(self, key) -> None:
         """全域鍵盤事件：按下 push-to-talk 熱鍵時開始錄音（忙碌中不接受新錄音）。"""
-        if key == PUSH_TO_TALK_KEY and not self._busy:
+        if key != PUSH_TO_TALK_KEY:
+            return
+        if self._busy:
+            print(f"[ptt] 按下 {PUSH_TO_TALK_KEY_LABEL}，但還在處理上一句，忽略")
+            return
+        # pynput 的 callback 丟出例外時監聽會默默結束，之後熱鍵就完全沒反應，所以這裡要接住。
+        try:
             self._ptt_recorder.start()
+        except Exception as e:
+            print(f"[ptt] 開始錄音失敗：{e!r}")
 
     def _on_key_release(self, key) -> None:
         """全域鍵盤事件：放開 push-to-talk 熱鍵時停止錄音。"""
         if key == PUSH_TO_TALK_KEY:
-            self._ptt_recorder.stop()
+            try:
+                self._ptt_recorder.stop()
+            except Exception as e:
+                print(f"[ptt] 停止錄音失敗：{e!r}")
 
     def _on_ptt_state_change(self, recording: bool) -> None:
         """錄音狀態改變時，更新對話框顯示的狀態文字。"""
@@ -996,6 +1106,9 @@ class CharacterWindow:
             if not pending:
                 continue
             if self._busy or self._input_popup is not None:
+                if time.monotonic() - last_check >= SCREEN_WATCH_INTERVAL_SEC + 60:
+                    print(f"[screen_watch] 等了超過一分鐘還不能看：busy={self._busy}")
+                    last_check = time.monotonic() - SCREEN_WATCH_INTERVAL_SEC
                 continue
 
             last_check = time.monotonic()
@@ -1005,8 +1118,14 @@ class CharacterWindow:
             if not caption:
                 continue
 
-            prompt = _SCREEN_WATCH_PROMPT_TEMPLATE.format(caption=caption)
+            look = dict(screen_watch.last_look)
+            prompt = _screen_watch_prompt(caption, look, self._game_info_for(look))
             self.root.after(0, lambda p=prompt: self._trigger_proactive(p))
+
+    def _on_game_mode_toggle(self) -> None:
+        """右鍵選單「遊戲模式」：下一輪看螢幕就生效，並記住這次選擇。"""
+        screen_watch.game_mode = self._game_mode_var.get()
+        _save_prefs(game_mode=screen_watch.game_mode)
 
     def _on_screen_watch_toggle(self) -> None:
         """右鍵選單的開關被點擊：立刻改變執行中的行為。
@@ -1214,7 +1333,67 @@ class CharacterWindow:
 
         self._busy = True
         self._set_dialogue("...", is_status=True)
-        threading.Thread(target=self._handle_message, args=(prompt_for_llm,), daemon=True).start()
+        # 主動搭話（看螢幕、Claude 通知）不做「說不確定就查」：那是她自己起的頭，不是回答主人的問題
+        threading.Thread(target=self._handle_message, args=(prompt_for_llm, False), daemon=True).start()
+
+    def _game_info_for(self, look: dict) -> Optional[str]:
+        """前景是新的遊戲／程式（不在一般程式清單裡）時，在背景用視窗標題查一次資料。
+        查到之前先回傳 None，不拖慢這次講話；查到後同一個程式之後都會帶上（記在 _game_info）。"""
+        process = (look.get("process") or "").lower()
+        if not process or process in _LOOKUP_SKIP_PROCESSES:
+            return None
+        if not hasattr(self, "_game_info"):
+            self._game_info = {}
+        if process not in self._game_info:
+            self._game_info[process] = None  # 標記查詢中，避免重複開執行緒
+            query = web_lookup.clean_title(look.get("title", "")) or process.removesuffix(".exe")
+
+            def _lookup():
+                self._game_info[process] = web_lookup.search(query)
+
+            threading.Thread(target=_lookup, daemon=True).start()
+        return self._game_info.get(process)
+
+    def _claude_event_loop(self) -> None:
+        """背景執行緒：接 Claude Code hook 傳來的通知，轉給主執行緒處理。"""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.bind(("127.0.0.1", CLAUDE_EVENT_PORT))
+        except OSError as e:
+            print(f"[claude_event] 埠 {CLAUDE_EVENT_PORT} 開不起來，收不到 Claude 的通知：{e}")
+            return
+        while True:
+            data, _ = sock.recvfrom(4096)
+            try:
+                event = json.loads(data.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                continue
+            if event.get("event") in _CLAUDE_EVENT_PROMPTS:
+                print(f"[claude_event] 收到：{event}")
+                self.root.after(0, lambda e=event: self._on_claude_event(e))
+
+    def _on_claude_event(self, event: dict, tries: int = 0) -> None:
+        """角色有空就讓她講一句；正在講話的話稍後再試，等太久就放棄。"""
+        if self._busy:
+            if tries < CLAUDE_EVENT_MAX_TRIES:
+                self.root.after(CLAUDE_EVENT_RETRY_MS, lambda: self._on_claude_event(event, tries + 1))
+            return
+        minutes = max(1, round(float(event.get("seconds", 60)) / 60))
+        self._trigger_proactive(_CLAUDE_EVENT_PROMPTS[event["event"]].format(minutes=minutes))
+
+    def _on_chunked_tts_toggle(self) -> None:
+        """右鍵選單「分段播放」被點擊：下一句開始生效，並記住這次選擇。"""
+        self._chunked_tts = self._chunked_tts_var.get()
+        _save_prefs(chunked_tts=self._chunked_tts)
+
+    def _on_clear_memory(self) -> None:
+        """右鍵選單「清除對話記憶」：清掉角色記得的對話（含存檔），下一句從頭開始聊。
+
+        歷史紀錄視窗裡的文字不會跟著清掉——那是給使用者自己看的紀錄，
+        跟「角色記不記得」是兩件事。
+        """
+        self._conversation.clear()
+        self._set_dialogue("（對話記憶已清除）", is_status=True)
 
     def _on_close(self) -> None:
         """關閉程式：停止全域熱鍵監聽、收掉輸入列與歷史紀錄視窗，再關閉主視窗。"""
@@ -1222,61 +1401,136 @@ class CharacterWindow:
         self._hide_input_popup()
         if self._history_window is not None:
             self._history_window.destroy()
+        livliv_link.send_quit()
+        # 對話和看圖模型馬上從顯示卡卸載（不然 Ollama 的 llama-server 會再佔 5 分鐘）；走雲端時本機沒載模型，叫了也沒差
+        screen_watch.unload_models([chat.MODEL, screen_watch.VISION_MODEL])
         self.root.destroy()
 
-    def _handle_message(self, text: str) -> None:
-        """在背景執行緒裡處理一輪完整的對話：LLM 生成 -> 語音合成／翻譯 -> 播放。
+    def _handle_message(self, text: str, allow_lookup: bool = True) -> None:
+        """在背景執行緒裡處理一輪完整的對話：LLM 生成 -> 分段語音合成＋翻譯 -> 邊合成邊播放。
 
         所有結果都透過 self._task_queue 傳回主執行緒（見 _poll_queue），
         因為 Tkinter 的元件只能在主執行緒操作，背景執行緒不能直接更新畫面。
+
+        ## 分段合成、邊合成邊播放（參考 Project AIRI 的 speech pipeline）
+
+        以前是整段台詞合成完才開始播，台詞一長就要乾等。現在先用
+        split_for_tts() 把台詞切成幾段，由 _produce_audio 在背景一段一段
+        合成、丟進 audio_queue；這裡一拿到第一段就開始播放，播放的同時
+        下一段已經在合成了。使用者實際等待的時間只剩「第一段」的合成時間。
+
+        中文翻譯另外開一條執行緒跑，翻好就先顯示在對話框，不用等語音。
         """
         try:
-            reply = chat_ja(text)
+            reply = chat_ja(text, history=self._conversation)
+            # 要查資料的兩種情況（一則訊息最多查一次）：
+            # 1. 她自己只回了〔查：關鍵字〕
+            # 2. 她回答裡說不確定（本機模型很少主動查，但會老實說不清楚）→ 另外問一次要查什麼，
+            #    這一問不帶對話紀錄、也不存進去；她說〔不用查〕就照原本的回答講
+            # 3. 主人明講「查一下」「幫我查」：一定查
+            query = web_lookup.find_request(reply.reply_speech)
+            if not query and allow_lookup and (web_lookup.sounds_unsure(reply.reply_speech)
+                                               or web_lookup.asked_to_search(text)):
+                query = web_lookup.find_request(chat_ja(web_lookup.query_prompt(text)).reply_speech)
+            if query:
+                self.root.after(0, lambda q=query: self._set_dialogue(f"（查資料中：{q}）", is_status=True))
+                result = web_lookup.search(query)
+                reply = chat_ja(web_lookup.followup_prompt(query, result), history=self._conversation)
+                reply.reply_speech = web_lookup.strip_requests(reply.reply_speech)
         except Exception as e:
             self._task_queue.put(("error", f"對話生成失敗：{e}"))
             return
 
-        # 語音生成跟中文翻譯平行跑：播放／對嘴只需要 reply_speech 跟 tone，
-        # 不必等中文翻譯完成才能開始，這樣可以縮短使用者實際等待的時間。
-        result: dict = {}
+        # 台詞裡的〔害羞〕這種表情標記不能唸、也不能翻譯，先拿掉；
+        # 每一段的表情排程在播放那一段之前傳給舞台（見 expressions.py）。
+        spoken, _ = expressions.split_tags(reply.reply_speech)
 
-        def _run_generate():
-            try:
-                result["audio_path"] = generate(reply.reply_speech, None, reply.tone)
-            except Exception as e:
-                result["audio_error"] = e
-
-        def _run_translate():
-            try:
-                result["reply_zh"] = translate_zh(reply.reply_speech)
-            except Exception as e:
-                result["zh_error"] = e
-
-        t_gen = threading.Thread(target=_run_generate)
-        t_zh = threading.Thread(target=_run_translate)
-        t_gen.start()
+        # 翻譯跟語音合成平行跑：播放／對嘴只需要 reply_speech 跟 tone。
+        t_zh = threading.Thread(target=self._translate_and_show, args=(spoken,), daemon=True)
         t_zh.start()
-        t_gen.join()
+
+        # 分段播放關閉時，整段當成「只有一段」走同一套流程，行為就跟以前一樣。
+        if self._chunked_tts:
+            raw_chunks = split_for_tts(reply.reply_speech) or [reply.reply_speech]
+        else:
+            raw_chunks = [reply.reply_speech]
+        segments = expressions.split_chunks(raw_chunks) or [(spoken, [])]
+        chunks = [text for text, _ in segments]
+        plans = [plan for _, plan in segments]
+        # 每段的語氣跟著那段的表情走（例如〔難過〕用 hesitant），沒有標記才用模型選的 tone
+        tones = [expressions.tone_for(plan, reply.tone) for plan in plans]
+        audio_queue: "queue.Queue[tuple]" = queue.Queue()
+        threading.Thread(
+            target=self._produce_audio, args=(chunks, tones, audio_queue), daemon=True
+        ).start()
+
+        # 依序播放每一段：queue.get() 會等到那一段合成完成才返回。
+        segment = 0
+        while True:
+            kind, payload = audio_queue.get()
+            if kind == "end":
+                break
+            if kind == "error":
+                self._task_queue.put(("error", f"語音生成失敗：{payload}"))
+                t_zh.join()
+                return
+
+            data, samplerate = payload
+            livliv_link.send_expr_plan(plans[segment] if segment < len(plans) else [])
+            segment += 1
+            try:
+                play_for_avatar(data, samplerate, on_mouth=self._queue_mouth_state)
+            except Exception as e:
+                print(f"[desktop_pet] 播放失敗：{e}")
+
+        # 等翻譯也結束才解除忙碌，避免下一輪對話開始後，上一輪的翻譯才姍姍來遲
+        # 蓋掉新的對話框內容。
         t_zh.join()
+        self._task_queue.put(("done", None))
 
-        if "audio_error" in result:
-            self._task_queue.put(("error", f"語音生成失敗：{result['audio_error']}"))
-            return
-
-        reply_zh = result.get("reply_zh") or f"（翻譯失敗：{result.get('zh_error')}）"
+    def _translate_and_show(self, reply_speech: str) -> None:
+        """背景執行緒：把角色台詞翻成中文，翻好就送去主執行緒顯示並記進歷史紀錄。"""
+        try:
+            reply_zh = translate_zh(reply_speech)
+        except Exception as e:
+            reply_zh = f"（翻譯失敗：{e}）"
         self._task_queue.put(("reply", reply_zh))
 
-        try:
-            data, samplerate = sf.read(str(result["audio_path"]), dtype="float32")
-            play_for_avatar(data, samplerate, on_mouth=self._queue_mouth_state)
-        except Exception as e:
-            print(f"[desktop_pet] 播放失敗：{e}")
+    @staticmethod
+    def _produce_audio(chunks: list, tones: list, audio_queue: "queue.Queue[tuple]") -> None:
+        """背景執行緒：一段一段合成語音，合成好的音訊資料依序丟進 audio_queue。
 
-        self._task_queue.put(("done", None))
+        放進佇列的是「已經讀進記憶體的音訊資料」而不是檔案路徑——
+        tts_infer 只會保留最新幾個輸出檔，段落一多，還沒播到的檔案
+        有可能先被清掉，先讀進記憶體就沒有這個問題。
+
+        佇列裡的訊息：("audio", (data, samplerate))、("error", 例外)、("end", None)。
+        某一段合成失敗就停止，後面的段落不再合成。
+        """
+        for chunk, tone in zip(chunks, tones):
+            try:
+                path = generate(chunk, None, tone)
+                data, samplerate = sf.read(str(path), dtype="float32")
+            except Exception as e:
+                audio_queue.put(("error", e))
+                return
+            audio_queue.put(("audio", (data, samplerate)))
+        audio_queue.put(("end", None))
 
     def _queue_mouth_state(self, is_open: bool) -> None:
         """播放執行緒呼叫：把嘴巴開合狀態送進佇列，交給主執行緒更新畫面。"""
         self._task_queue.put(("mouth", is_open))
+
+    def _on_stage_event(self, event: dict) -> None:
+        """處理舞台視窗傳來的操作：打字送出、右鍵開選單、點選單項目。"""
+        if event.get("event") == "text":
+            self._submit(str(event.get("text", "")).strip())
+        elif event.get("event") == "menu":
+            # 看不見的主視窗移到游標旁，語言設定這類對話框才會開在角色附近。
+            self.root.geometry(f"1x1+{int(event['x'])}+{int(event['y'])}")
+            livliv_link.send_menu(livliv_link.describe_menu(self._context_menu))
+        elif event.get("event") == "menuitem":
+            livliv_link.invoke_menu(self._context_menu, event["path"])
 
     def _poll_queue(self) -> None:
         """主執行緒定時輪詢背景執行緒送來的事件，並依種類更新畫面或狀態。"""
@@ -1291,6 +1545,8 @@ class CharacterWindow:
                     self._set_dialogue(payload, is_status=True)
                 elif kind == "mouth":
                     self.avatar_label.configure(image=self._current_frame(is_open=payload))
+                elif kind == "stage":
+                    self._on_stage_event(payload)
 
                 if kind in ("error", "done"):
                     self._busy = False

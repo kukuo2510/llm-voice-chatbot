@@ -2,7 +2,7 @@
 
 任何需要讀取 LLM_PROVIDER / STT_PROVIDER / API key 之類設定的模組，
 都應該在自己檔案最上面呼叫 load_dotenv()，不要依賴「呼叫端（例如
-desktop_pet.py、chat_cli.py……）有沒有先載入、載入順序對不對」。
+desktop_pet.py、screen_watch.py……）有沒有先載入、載入順序對不對」。
 
 背景：曾經發生過呼叫端根本沒載入 .env，或是載入時機太晚
 （例如 chat.py 已經把 LLM_PROVIDER 讀成預設值之後，才載入 .env）

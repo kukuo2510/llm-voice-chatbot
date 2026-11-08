@@ -8,7 +8,7 @@ characters/<新角色>/voice_config.py、把下面 import 那一行改成指到�
 ## 前置需求
 
 api_v2.py 要先啟動，並且已經載入對應角色的權重
-（或者直接雙擊 start_tts_inference.bat）：
+（桌寵和 start_desktop_pet_hidden.vbs 都會自動啟動它，手動的話）：
 
     cd GPT-SoVITS
     python api_v2.py -a 127.0.0.1 -p 9880
@@ -124,7 +124,10 @@ def generate(text: str, output_path: str | None = None, tone: str = DEFAULT_TONE
         out = Path(output_path)
     else:
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        out = OUTPUT_DIR / f"{time.strftime('%Y%m%d_%H%M%S')}.wav"
+        # 檔名要精確到毫秒：分段合成時（見 tts_chunker.py）同一秒內會連續
+        # 產生好幾個檔案，只到秒的話後面的檔案會把前面的蓋掉。
+        millis = int(time.time() * 1000) % 1000
+        out = OUTPUT_DIR / f"{time.strftime('%Y%m%d_%H%M%S')}_{millis:03d}.wav"
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(audio_bytes)
