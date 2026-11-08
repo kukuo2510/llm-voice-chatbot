@@ -59,6 +59,8 @@ from pydantic import BaseModel, ValidationError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common.env import load_dotenv  # noqa: E402
 from conversation import ConversationHistory, format_time_prefix  # noqa: E402
+import expressions  # noqa: E402  表情標記的詞表（說明給模型看）
+import web_lookup  # noqa: E402  〔查：…〕上網查的說明
 
 load_dotenv()
 
@@ -92,6 +94,17 @@ OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 # TONE_REFS 是對應的——這裡列出的每一種語氣，都要能在那邊找到
 # 對應的參考音檔，否則 TTS 端會找不到參考音檔可用。
 TONE_OPTIONS = ["neutral", "happy", "serious", "hesitant", "intense"]
+
+# 語氣欄位的說明。serious 的參考音檔是五個裡最低沉的（約 243 Hz），
+# 原本只寫「依情緒基調選」時，高傲的角色加上一直吐槽螢幕，模型有一半以上的句子都選 serious，
+# 聽起來整天都很陰沉（2026-11-08 量過最近 20 句，12 句在 240～250 Hz）。
+# 所以把 serious 限定在真的生氣、訓人的時候，其他拿不準的一律 neutral。
+_TONE_FIELD_INSTRUCTIONS = (
+    "這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／"
+    "happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；"
+    "高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／"
+    "hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）"
+)
 
 # 角色人設放在 characters/<角色>/persona.md，要改台詞風格/個性設定，
 # 直接編輯那個檔案就好，不用碰這支程式碼。
@@ -140,6 +153,8 @@ def _reply_speech_field_instructions() -> str:
         f"字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成{lang}裡"
         f"道地的講法——如果是{lang}沒有的外來語詞彙，要轉換成{lang}的外來語發音寫法，不能"
         f"照抄原文字母；寫完之後自己檢查一遍，確認整句都是{lang}才輸出"
+        + expressions.instructions()
+        + web_lookup.instructions()
     )
 
 
@@ -152,7 +167,7 @@ def _build_output_format_instructions() -> str:
 {{
   "reply_speech": "{_reply_speech_field_instructions()}",
   "reply_zh": "reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙",
-  "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
+  "tone": "{_TONE_FIELD_INSTRUCTIONS}"
 }}
 """
 
@@ -170,7 +185,7 @@ def _build_speech_only_output_format_instructions() -> str:
 你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
 {{
   "reply_speech": "{_reply_speech_field_instructions()}",
-  "tone": "依這句回覆的情緒基調，從這幾個選項選一個：neutral（平靜）／happy（溫暖開心）／serious（嚴肅）／hesitant（猶豫低落）／intense（情緒強烈）"
+  "tone": "{_TONE_FIELD_INSTRUCTIONS}"
 }}
 """
 
@@ -396,7 +411,14 @@ def chat_ja(
         messages += history.to_messages()
     # 使用者訊息一律加時間前綴（格式說明見 conversation.format_time_prefix），
     # 系統提示詞裡已經告訴模型這個標記的意思、不要照抄。
-    messages.append({"role": "user", "content": format_time_prefix(now) + user_message})
+    # 最後補一句講話語言的提醒：規則離生成的位置越遠越不被遵守，系統提示詞裡的語言要求
+    # 隔著一大串對話紀錄，常常輸給「歷史都是日文」「人設寫了日文口癖」的慣性（切成中文還是講日文、
+    # 講日文時夾中文詞都是這個原因）。只加在這次送出的訊息，不存進對話紀錄。
+    reminder = (
+        f"\n\n（reply_speech 只能用{CHARACTER_SPEECH_LANGUAGE}，不能夾雜其他語言；〔〕表情標記除外。"
+        "主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）"
+    )
+    messages.append({"role": "user", "content": format_time_prefix(now) + user_message + reminder})
 
     raw_content = _call_llm(messages, json_format=True)
 

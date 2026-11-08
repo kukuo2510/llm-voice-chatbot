@@ -8,7 +8,7 @@ characters/<新角色>/voice_config.py、把下面 import 那一行改成指到�
 ## 前置需求
 
 api_v2.py 要先啟動，並且已經載入對應角色的權重
-（或者直接雙擊 start_tts_inference.bat）：
+（桌寵和 start_desktop_pet_hidden.vbs 都會自動啟動它，手動的話）：
 
     cd GPT-SoVITS
     python api_v2.py -a 127.0.0.1 -p 9880

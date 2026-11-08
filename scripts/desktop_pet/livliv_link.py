@@ -1,6 +1,6 @@
 """桌寵和 LivLiv 舞台視窗（../../../livliv-stage）之間的連線。
 
-預設關閉：只有環境變數 LIVLIV_STAGE=1 才會啟用，由 start_desktop_pet_livliv.bat 設定。
+預設關閉：只有環境變數 LIVLIV_STAGE=1 才會啟用，由 scripts/launch_hidden.bat（start_desktop_pet_hidden.vbs 啟動）設定。
 
 桌寵 -> 舞台（UDP，LIVLIV_UDP_PORT，預設 9890）
     語音（舞台只拿來算嘴型，不發聲，聲音還是 play_for_avatar 在播）、台詞、關閉指令。
@@ -54,6 +54,12 @@ def send_clip(data, samplerate: int) -> None:
 
 def send_say(text: str, is_status: bool) -> None:
     _send({"say": text[:MAX_SAY_CHARS], "status": is_status})
+
+
+def send_expr_plan(plan: list) -> None:
+    """下一段語音的表情排程：[{"at": 0～1, "expr": "害羞"}]，舞台在那段語音開始播時照位置換表情。
+    要在 send_clip 之前送，空的也要送（舞台會在講完後回到平常）。"""
+    _send({"exprPlan": plan})
 
 
 def send_quit() -> None:

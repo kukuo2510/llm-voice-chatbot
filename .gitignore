@@ -38,3 +38,6 @@ Thumbs.db
 
 # === 桌寵的多輪對話記憶（每台機器自己的聊天內容，不共用）===
 scripts/llm/.chat_history.json
+
+logs/
+scripts/llm/.lookup_cache.json
