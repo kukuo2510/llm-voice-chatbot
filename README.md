@@ -18,6 +18,9 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 - 「分段播放（先講先播）」開關：開著時一句合成完就先播，關掉則整段合成完一口氣播出，不會中途停頓
 - 選用：接 Claude Code 的 hook（`scripts/desktop_pet/claude_hook.py`，UDP 9892），Claude 在等你確認權限、或做完超過 1 分鐘的工作時，角色會開口提醒；只傳事件種類，不傳你交辦的內容
 - 選用的 LivLiv 舞台：用 Electron 透明視窗畫會動、會對嘴的角色，取代兩張 PNG 的立繪（見 [`../livliv-stage/README.md`](../livliv-stage/README.md)）
+- 表情：封閉詞表 11 個（開心、害羞、生氣…，`scripts/llm/expressions.py`），模型把〔害羞〕這種標記插在台詞裡，唸之前拿掉，舞台照標記在句子裡的位置換表情，語音語氣也跟著換
+- 上網查（`scripts/llm/web_lookup.py`，維基百科公開 API，免費、不用金鑰）：開新遊戲／程式時自動在背景查；她說不確定、或你說「查一下」時查完再回答。只送出關鍵字
+- 範例角色的人設是「以祥子為原型、住在你電腦裡的 AI」：官方劇情是她的過去，知道自己會看螢幕、記性有限，也有現實世界的知識
 
 - Type or hold a hotkey to talk; the character replies with voice + a text translation + a tone tag (happy/serious/hesitant...), and TTS switches its delivery to match
 - Character speech language is configurable (the desktop pet's right-click "Character Speech Language" submenu switches it instantly — common languages are one click away, anything else via "Custom..."; or set a starting value with `.env`'s `CHARACTER_SPEECH_LANGUAGE`), defaults to Japanese, no code changes needed when swapping characters
@@ -26,6 +29,9 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 - Optional: the desktop pet periodically glances at your screen and decides on its own whether to start a conversation (see architecture diagram below). A right-click "Game mode" toggle makes it look less often to free up the GPU
 - A "chunked playback" toggle: on, each sentence plays as soon as it's synthesized; off, the whole reply is synthesized first and played without pauses
 - Optional LivLiv stage: an Electron transparent window that draws an animated, lip-syncing character instead of two PNG frames (see [`../livliv-stage/README.md`](../livliv-stage/README.md))
+- Expressions: a closed vocabulary of 11 (happy, shy, angry…, `scripts/llm/expressions.py`). The model inserts tags such as 〔害羞〕 into its lines; they are stripped before speaking and the stage switches expression at the tag's position in the sentence, with the voice tone following
+- Web lookup (`scripts/llm/web_lookup.py`, Wikipedia's public API, free, no key): looks up a newly opened game/app in the background, and looks things up before answering when the character sounds unsure or you say "look it up". Only the keyword is sent
+- The sample character's persona is "an AI modelled on Sakiko, living on your computer": canon events are her past, she knows she watches your screen and has limited memory, and she has real-world knowledge
 
 ---
 
@@ -36,10 +42,15 @@ graph LR
     A["使用者輸入<br/>桌寵：打字 或 語音（SenseVoice／Whisper）"] --> B["chat.py<br/>+ persona.md"]
     B --> L{"LLM<br/>本地 Ollama<br/>或雲端 OpenAI"}
     L --> C["reply_speech + tone<br/>（reply_zh 平行生成）"]
-    C --> D["GPT-SoVITS TTS"]
+    C --> X["拿掉〔表情〕標記<br/>算出位置"]
+    X --> D["GPT-SoVITS TTS<br/>語氣跟著表情"]
     D --> E["播放<br/>喇叭 ＋ 虛擬音效卡（VTS 對嘴）"]
+    X -.->|表情排程| S["LivLiv 舞台（選用）<br/>對嘴＋換表情"]
+    D -.->|語音| S
 
-    W["螢幕讀取（選用，預設關閉）<br/>截圖 → 黑名單過濾 → qwen3-vl:2b 看圖"] -.->|當作情境| B
+    W["螢幕讀取（選用，預設關閉）<br/>截圖 → 黑名單過濾 → qwen3-vl:2b 看圖<br/>＋視窗標題"] -.->|當作情境| B
+    Q["上網查（維基百科）<br/>新遊戲自動查／不確定時查"] -.->|資料| B
+    H["Claude Code hook"] -.->|等確認／做完了| B
 ```
 
 ---
@@ -88,6 +99,28 @@ copy .env.example .env   # 填入需要的 token/key，細節見檔案內註解
 Double-click `start_desktop_pet_hidden.vbs` to launch: it starts the TTS server (reusing one that's already running), the LivLiv stage and the desktop pet in the background with no console windows, logging to `logs/tts.log` and `logs/pet.log`. Quitting the pet from its right-click menu also closes the stage and the TTS server it started; if something hangs, double-click `stop_desktop_pet_hidden.bat` to force everything closed. To use another stage character, set the `LIVLIV_MODEL` environment variable before launching (default `sakiko404`).
 
 To use your own character: copy `characters/sakiko/` to `characters/<your-character>/`, replace `persona.md`, `voice_config.py`, and the `avatar/` assets, and provide your own tone-reference audio clips (exported/trained via `voice-dataset-toolkit`, or recorded yourself). Then update the hardcoded `sakiko` paths in `tts_infer.py`/`chat.py`/`desktop_pet.py`. If your character speaks a different language, set `.env`'s `CHARACTER_SPEECH_LANGUAGE` accordingly, and replace `voice_config.py`'s `PRONUNCIATION_FIXES` (currently a Japanese-specific pronunciation-correction table) with whatever your language needs.
+
+---
+
+## 參考 / References
+
+做這個平台時參考過的專案和文章，以及參考了什麼：
+
+| 參考 | 用在哪裡 |
+|---|---|
+| [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) | 語音合成本體 |
+| [Project AIRI](https://github.com/moeru-ai/airi) | 分段合成、邊合成邊播放的流程；對話記憶的做法 |
+| [「從人設到踩坑：大肥魚是怎麼做出來的」](https://x.com/Remake___/status/2114696368883429580)（Eason） | 人設寫成可執行的規則：口癖頻率、禁止重複開頭並給替代說法、誠實界線、知識範圍；規則離生成位置越近越有效（每則訊息最後的語言提醒） |
+| 網友分享的桌寵實作經驗（封閉表情詞表） | 表情不讓模型自由輸出參數，只給十幾個詞；鮮活感靠標記插在句子裡的位置 |
+| [Open-LLM-VTuber](https://docs.llmvtuber.com/en/docs/intro/) | 「需要時才看螢幕」：換視窗或隔一段時間才真的看圖 |
+| [Digital_Life_Server](https://github.com/zixiiu/Digital_Life_Server) | 對照組：用另一個情緒分析模型判斷情緒（我們改成讓對話模型自己插標記，比較省） |
+| [ZerolanLiveRobot](https://github.com/AkagawaTsurunaki/ZerolanLiveRobot) 系列 | 參考：看螢幕分「讀文字」和「看圖」、長期記憶用向量資料庫、用 live2d-py 在 Python 畫 Live2D（之後換模型時的選項） |
+| [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page)（維基百科） | 上網查的資料來源 |
+
+The projects and write-ups above shaped this platform: GPT-SoVITS (TTS), Project AIRI (chunked TTS pipeline, memory),
+Eason's write-up on building the 大肥魚 persona (persona as executable rules, reminders placed near the generation point),
+a shared desktop-pet tip (closed expression vocabulary, tag placement), Open-LLM-VTuber (look at the screen only when needed),
+Digital_Life_Server and ZerolanLiveRobot (comparison points), and the MediaWiki API (web lookup).
 
 ---
 
