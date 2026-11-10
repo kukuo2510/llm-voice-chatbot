@@ -68,7 +68,10 @@ def _parse_sequence(name: str, raw, parse_set) -> SequenceDef:
             duration = _duration(rp.get("duration_sec"))
         except (TypeError, ValueError, IndexError, KeyError) as exc:
             raise ValueError(f"第 {i} 段：{exc}") from exc
-        aset = parse_set(key, {"loop": True, **rp, "native_facing": facing})
+        extra = {}
+        if raw.get("shared_scale"):  # 各段共用同一個縮放基準（例如沙發：坐下／躺著的沙發一樣大、不跳位）
+            extra["norm_frames"] = [f for ph in raw_phases if isinstance(ph, dict) for f in ph.get("frames", [])]
+        aset = parse_set(key, {"loop": True, **rp, **extra, "native_facing": facing})
         if aset is None:
             raise ValueError(f"第 {i} 段無法解析")
         phases.append(Phase(key, aset, duration, bool(rp.get("wake", False))))

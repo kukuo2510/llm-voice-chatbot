@@ -13,6 +13,8 @@ talking／dragging／falling／walking 都會取消它；點擊可喚醒（wake_
 
 import random
 
+AFTER_TALK_SEC = 4.0  # 講完話至少隔這麼久才演小動作
+
 from pet_anim_seq import SequenceRun
 
 
@@ -97,13 +99,16 @@ class AnimController:
         """推進狀態機，回傳 (key, frame_index)；說話中回傳 None。"""
         if self._start is None:
             self._enter("idle", now)
-            self._schedule_next(now)
+            if self._next_occ is None:  # 只有第一次才排；講完話回來沿用原本的排程
+                self._schedule_next(now)
 
         if talking:
             self._seq = None
             if self.key != "idle":
                 self._enter("idle", now)
-            self._schedule_next(now)  # 講完話不要馬上跳小動作
+            # 講完話不要馬上跳小動作，但也不要整個重排：她常講話，重排的話小動作幾乎輪不到
+            if self._next_occ is None or self._next_occ < now + AFTER_TALK_SEC:
+                self._next_occ = now + AFTER_TALK_SEC
             self._start = None  # 下次 step 重新開始 idle
             return None
 

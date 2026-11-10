@@ -34,9 +34,10 @@ def union_bbox(images) -> tuple:
     )
 
 
-def normalize_set(images, target_h: int, canvas_size: tuple, center_x: float, baseline_y: float) -> list:
-    """把一組幀正規化，回傳等長的 RGBA 畫布清單（見模組說明）。"""
-    ub = union_bbox(images)
+def normalize_set(images, target_h: int, canvas_size: tuple, center_x: float, baseline_y: float,
+                  ub=None) -> list:
+    """把一組幀正規化，回傳等長的 RGBA 畫布清單（見模組說明）。ub：指定外框（多段共用縮放基準時）。"""
+    ub = ub or union_bbox(images)
     src_h = max(1, ub[3] - ub[1])
     scale = target_h / src_h
     # 太寬（例如帶道具）就整組縮到放得進畫布，不要被切掉
@@ -76,11 +77,30 @@ def target_geometry(assets_dir, display_w: int) -> tuple:
     return canvas, (y1 - y0) * s, (x0 + x1) / 2 * s, y1 * s
 
 
+def wide_canvas(images, target_h: int, canvas: tuple, center_x: float, ub=None) -> tuple:
+    """寬場景用：畫布加寬到放得下整組（同樣的角色比例），回傳 (新畫布大小, 新水平中心)。
+
+    加寬時以原本的水平中心為準往兩邊撐開，視窗端（pet_anim_window）也以中心為準加寬，角色不會跳位。
+    """
+    ub = ub or union_bbox(images)
+    need_w = round((ub[2] - ub[0]) * target_h / max(1, ub[3] - ub[1]))
+    if need_w <= canvas[0]:
+        return canvas, center_x
+    extra = need_w - canvas[0]
+    extra += extra % 2  # 兩邊各撐一半，保持偶數
+    return (canvas[0] + extra, canvas[1]), center_x + extra / 2
+
+
 def build_set(anim_set, assets_dir, display_w: int, mirrored: bool) -> list:
     """載入並正規化一組動畫（RGBA，尚未去背）。"""
     canvas, height, cx, base = target_geometry(assets_dir, display_w)
     ratio = getattr(anim_set, "height_ratio", 1.0)
-    frames = normalize_set([load_frame(p) for p in anim_set.frames], round(height * ratio), canvas, cx, base)
+    images = [load_frame(p) for p in anim_set.frames]
+    norm = getattr(anim_set, "norm_frames", ())
+    ub = union_bbox([load_frame(p) for p in norm]) if norm else None
+    if getattr(anim_set, "wide", False):
+        canvas, cx = wide_canvas(images, round(height * ratio), canvas, cx, ub)
+    frames = normalize_set(images, round(height * ratio), canvas, cx, base, ub)
     return mirror_all(frames) if mirrored else frames
 
 

@@ -17,7 +17,8 @@
            "native_facing": "front" | "left" | "right",   # 圖本身面向；front 永不翻轉
            "duration_sec": [4.5, 7.5],           # 只有 loop 的小動作用：演多久
            "weight": 1,                          # 小動作被挑中的權重
-           "height_ratio": 1.0}                  # 選填：顯示高度比例（坐著、跪著的動作調小）
+           "height_ratio": 1.0,                  # 選填：顯示高度比例（坐著、跪著的動作調小）
+           "wide": false}                        # 選填：寬場景，演的時候視窗暫時變寬
     reactions 說明：
       poke ：點臉。SET 另外可帶 "sequence_sec": [0.75, 1.0, 2.5]（連戳第 0/1/2 級各演多久，
              超過就停在最後一級）、"reset_after_sec": 2.0（隔多久沒戳就從頭）、
@@ -51,6 +52,8 @@ class AnimSet:
     duration: tuple  # (min, max) 秒，loop 的小動作才用
     weight: float
     height_ratio: float = 1.0  # 這組顯示高度＝站立身高 × 這個比例（坐著、跪著的動作調小）
+    wide: bool = False  # 寬場景（例如連沙發一起）：演的時候視窗暫時變寬，不縮小角色
+    norm_frames: tuple = ()  # 縮放基準用的幀（空＝用自己的 frames）；多段動作 shared_scale 時由 pet_anim_seq 填入
 
 
 @dataclass(frozen=True)
@@ -84,6 +87,16 @@ def _pair(value, default) -> tuple:
     return default
 
 
+def _resolve(base: Path, f) -> Path:
+    """幀路徑轉成絕對路徑，並確認沒跑出 avatar 資料夾、檔案存在。"""
+    p = (base / f).resolve()
+    if base.resolve() not in p.parents:
+        raise ValueError(f"路徑跑出 avatar 資料夾外面：{f}")
+    if not p.is_file():
+        raise ValueError(f"找不到檔案：{f}")
+    return p
+
+
 def _parse_set(name: str, raw: dict, base: Path):
     """解析一組動畫；任何問題（缺檔、格式錯）回傳 None 並印出原因，不丟例外。"""
     try:
@@ -114,6 +127,8 @@ def _parse_set(name: str, raw: dict, base: Path):
             duration=_pair(raw.get("duration_sec"), DEFAULT_LOOP_DURATION),
             weight=max(0.0, float(raw.get("weight", 1))),
             height_ratio=min(1.5, max(0.2, float(raw.get("height_ratio", 1)))),
+            wide=bool(raw.get("wide", False)),
+            norm_frames=tuple(_resolve(base, f) for f in raw.get("norm_frames", ())),
         )
     except (KeyError, TypeError, ValueError) as exc:
         print(f"[anim] 略過動畫 {name!r}：{exc}")

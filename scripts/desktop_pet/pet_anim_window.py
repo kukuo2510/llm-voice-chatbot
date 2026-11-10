@@ -71,6 +71,16 @@ class AnimationMixin:
             self._anim_photos[pk] = photo
         return photo
 
+    def _anim_fit_window(self, width: int) -> None:
+        """寬場景（wide）的幀比立繪寬：以視窗中心為準加寬／縮回，不超出螢幕左右邊。"""
+        cur_w = self.root.winfo_width()
+        if width == cur_w or width < 1:
+            return
+        h = self.root.winfo_height()
+        x = self.root.winfo_x() + (cur_w - width) // 2
+        x = max(0, min(x, self.root.winfo_screenwidth() - width))
+        self.root.geometry(f"{width}x{h}+{x}+{self.root.winfo_y()}")
+
     def _anim_tick(self) -> None:
         try:
             now = time.monotonic()
@@ -83,12 +93,15 @@ class AnimationMixin:
             if result is None:
                 if self._anim_last is not None:  # 剛開始說話：回到靜態立繪，嘴型換圖從這裡接手
                     self.avatar_label.configure(image=self._current_frame(is_open=False))
+                    self._anim_fit_window(self._avatar_width)  # 寬場景演到一半開始講話：縮回立繪寬
                     self._anim_last = None
             else:
                 fx = fx_for(result[0], self._anim_ctrl.elapsed(now))
                 state = (*result, fx, self._facing, self._avatar_width)
                 if state != self._anim_last:
-                    self.avatar_label.configure(image=self._anim_photo(*result, fx))
+                    photo = self._anim_photo(*result, fx)
+                    self.avatar_label.configure(image=photo)
+                    self._anim_fit_window(photo.width())
                     self._anim_last = state
         except Exception as exc:  # 動畫壞了就整個停用，退回靜態立繪
             print(f"[anim] 動畫停用：{exc!r}")
