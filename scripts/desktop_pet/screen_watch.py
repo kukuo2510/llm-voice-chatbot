@@ -47,6 +47,7 @@ from PIL import Image, ImageGrab
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common.env import load_dotenv  # noqa: E402
+from capture_hide import hidden_from_capture  # noqa: E402
 
 load_dotenv()
 
@@ -186,7 +187,8 @@ def _capture_screenshot_png_bytes() -> bytes:
     一次要算 20 幾秒，又每隔幾十秒就看一次，開遊戲時會一直跟遊戲搶顯示卡。
     長邊 1280 還看得出畫面在做什麼。
     """
-    img = ImageGrab.grab()
+    with hidden_from_capture():  # 只在這一瞬間不拍到桌寵自己，平常使用者截圖／錄影拍得到她
+        img = ImageGrab.grab()
     img.thumbnail((SCREENSHOT_MAX_SIDE, SCREENSHOT_MAX_SIDE))
     buf = io.BytesIO()
     img.save(buf, format="PNG")

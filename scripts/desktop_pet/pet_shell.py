@@ -28,21 +28,11 @@ MAGIC_TRANSPARENT_COLOR = "#ff00ff"
 # win32 GetAncestor 的旗標常數：2 代表「取得最上層視窗（root window）」。
 _GA_ROOT = 2
 
-# win32 SetWindowDisplayAffinity 的旗標常數：代表「把這個視窗排除在
-# 螢幕擷取／截圖之外」。
-_WDA_EXCLUDEFROMCAPTURE = 0x00000011
-
 
 def exclude_self_from_screen_capture(tk_hwnd: int) -> int:
-    """讓 screen_watch 之類的全螢幕擷取功能，自動跳過桌寵本體的視窗。
+    """登記桌寵視窗：只有「看螢幕」截圖那一瞬間把它藏起來（見 capture_hide.py）。
 
-    背景：如果不排除的話，「看螢幕」功能會把桌寵自己的立繪也一起
-    拍進擷取畫面裡，變成一種奇怪的「自拍」。
-
-    實作細節：pywin32 沒有包裝 SetWindowDisplayAffinity 這個 API，
-    所以這裡直接用 ctypes 呼叫 user32.dll。如果呼叫失敗（例如在
-    不支援這個 API 的舊版 Windows 上執行），就當作沒發生過這件事，
-    不影響桌寵其他功能正常運作。
+    名稱沿用舊版（舊版是開機就永久排除，連使用者自己截圖／錄影都拍不到）。
 
     回傳值是解析出來的「最上層視窗」hwnd（如果解析失敗，就回傳
     原本傳進來的 tk_hwnd）。呼叫端可以重複使用這個回傳的 hwnd
@@ -51,13 +41,14 @@ def exclude_self_from_screen_capture(tk_hwnd: int) -> int:
     """
     import ctypes
 
+    import capture_hide
+
     try:
-        user32 = ctypes.windll.user32
-        root_hwnd = user32.GetAncestor(tk_hwnd, _GA_ROOT) or tk_hwnd
-        user32.SetWindowDisplayAffinity(root_hwnd, _WDA_EXCLUDEFROMCAPTURE)
-        return root_hwnd
+        root_hwnd = ctypes.windll.user32.GetAncestor(tk_hwnd, _GA_ROOT) or tk_hwnd
     except Exception:
         return tk_hwnd
+    capture_hide.register(root_hwnd)
+    return root_hwnd
 
 
 # 立繪素材快取：key 是 assets_dir，讓不同角色的立繪各自快取、互不覆蓋，
