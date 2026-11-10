@@ -141,7 +141,7 @@ WANDER_MAX_DURATION_SEC = 3.0
 # 可以直接切換，不用進 .env 改。所有記住的偏好統一存進下面這個本機
 # 小檔案（_PET_PREFS_FILE）；不記住的話，下次開程式還是照 .env 的預設值。
 
-SCREEN_WATCH_INTERVAL_SEC = int(os.environ.get("SCREEN_WATCH_INTERVAL_SEC", "45"))  # 2026-11-08 使用者覺得 20 秒太密，改 45
+SCREEN_WATCH_INTERVAL_SEC = int(os.environ.get("SCREEN_WATCH_INTERVAL_SEC", "150"))  # 2026-11-08 20→45；2026-11-10 使用者覺得一直講話，改 150
 
 # Claude Code 的 hook（scripts/desktop_pet/claude_hook.py）透過這個 UDP 埠通知桌寵：
 # Claude 在等主人確認權限、或做完一件比較久的工作。只聽本機。

@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 
 PORT = int(os.environ.get("CLAUDE_EVENT_PORT", "9892"))  # 要跟 desktop_pet.py 一致
-DONE_MIN_SECONDS = float(os.environ.get("CLAUDE_HOOK_DONE_MIN_SECONDS", "60"))
+DONE_MIN_SECONDS = float(os.environ.get("CLAUDE_HOOK_DONE_MIN_SECONDS", "180"))  # 2026-11-10 60→180：短工作不通知，免得一直講話
 STATE_DIR = Path(tempfile.gettempdir()) / "claude_pet_hook"
 LOG = STATE_DIR / "notify_types.log"  # 只記通知種類，用來確認有沒有抓對（不記內容）
 
