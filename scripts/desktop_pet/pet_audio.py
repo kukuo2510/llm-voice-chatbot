@@ -13,7 +13,8 @@ import numpy as np
 import sounddevice as sd
 import soundfile as sf
 
-from pet_config import CABLE_DEVICE_NAME_HINT, MOUTH_HOP_MS, MOUTH_THRESHOLD_RATIO
+from pet_config import (CABLE_DEVICE_NAME_HINT, MOUTH_FLAP_PATTERN, MOUTH_HOP_MS,
+                        MOUTH_THRESHOLD_RATIO, MOUTH_VOICE_RATIO)
 from tts_infer import generate
 from speech_lang import text_lang_for
 import chat
@@ -40,7 +41,17 @@ def _mouth_envelope(data: np.ndarray, samplerate: int, hop_ms: int = MOUTH_HOP_M
     if peak <= 1e-6:
         return [False] * len(levels)
 
-    return [level > peak * MOUTH_THRESHOLD_RATIO for level in levels]
+    # 有在發聲的段落照固定節奏開合；每段發聲重新從「開」開始，聲音一出來嘴就張開。
+    out = []
+    run = 0
+    for level in levels:
+        if level > peak * MOUTH_VOICE_RATIO:
+            out.append(MOUTH_FLAP_PATTERN[run % len(MOUTH_FLAP_PATTERN)])
+            run += 1
+        else:
+            out.append(False)
+            run = 0
+    return out
 
 
 def _find_cable_input_device() -> Optional[int]:

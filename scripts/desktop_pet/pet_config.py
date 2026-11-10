@@ -87,6 +87,13 @@ MOUTH_HOP_MS = 90
 # 這段音量要超過整句最大音量的這個比例，才會被判定為「張嘴」。
 MOUTH_THRESHOLD_RATIO = 0.3
 
+# 2026-11-10：上面的門檻在降噪後太嚴，一句話只有約 3 成時間張嘴、中間常整段閉著，
+# 看起來像有聲音嘴巴卻沒動。改成：音量超過這個比例就算「正在發聲」，
+# 發聲期間照固定節奏開合（MOUTH_FLAP_PATTERN，每格 MOUTH_HOP_MS），沒聲音才閉嘴。
+MOUTH_VOICE_RATIO = 0.12
+# 開、開、合 → 一輪約 270ms，接近講話的音節速度。
+MOUTH_FLAP_PATTERN = (True, True, False)
+
 # 滑鼠按下去之後，移動距離要超過這個門檻（像素）才算是「拖曳」，
 # 沒超過的話就當成單純的「點擊」。
 DRAG_THRESHOLD_PX = 3
