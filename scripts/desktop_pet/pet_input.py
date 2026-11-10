@@ -24,7 +24,9 @@ class InputPopupMixin:
             self._show_input_popup()
 
     def _show_input_popup(self) -> None:
-        """建立並顯示貼在角色下方的極簡輸入列。"""
+        """建立並顯示貼在角色下方的極簡輸入列（classic 模式優先用頭頂的氣泡輸入列）。"""
+        if self._show_bubble_input():
+            return
         popup = tk.Toplevel(self.root)
         popup.overrideredirect(True)
         popup.attributes("-topmost", True)
@@ -54,7 +56,11 @@ class InputPopupMixin:
 
     def _position_input_popup(self) -> None:
         """把輸入列定位到角色視窗正下方。角色移動或縮放後都要重新呼叫這個函式。"""
+        self._bubble_refresh()  # 頭頂氣泡跟著角色走（沒有氣泡時什麼都不做）
         if self._input_popup is None:
+            return
+        if self._popup_is_bubble:
+            self._position_bubble_input()
             return
 
         self.root.update_idletasks()
@@ -68,6 +74,9 @@ class InputPopupMixin:
             self._input_popup.destroy()
             self._input_popup = None
             self._input_entry = None
+            if self._popup_is_bubble:
+                self._popup_is_bubble = False
+                self._bubble_refresh()  # 輸入結束，台詞氣泡回來
 
     def _on_popup_submit(self, event: tk.Event = None) -> None:
         """輸入列按下 Enter：取出文字、關閉輸入列，並送出訊息。"""

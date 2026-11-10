@@ -11,6 +11,8 @@ import livliv_link
 class DialogueMixin:
     """對話框（疊在立繪下緣、只留最新一句）。"""
 
+    _dialogue_is_status = False  # 氣泡要用來決定樣式（正式台詞 vs. 狀態文字）
+
     # ============================================================
     # 對話框（疊在立繪下緣，VN 風格，只留最新一句）
     # ============================================================
@@ -20,6 +22,8 @@ class DialogueMixin:
 
         沒有內容時整個收起來，不然會在立繪下緣多出一條空白的對話框。
         """
+        if self._bubble_apply_dialogue(self.dialogue_var.get(), self._dialogue_is_status):
+            return  # classic 模式：頭頂氣泡接手（舞台模式／氣泡不可用時走下面原本的做法）
         if self.dialogue_var.get():
             self.dialogue_label.place(relx=0.5, rely=1.0, anchor="s", relwidth=1)
         else:
@@ -28,6 +32,7 @@ class DialogueMixin:
     def _set_dialogue(self, text: str, is_status: bool) -> None:
         """更新對話框內容，並依 is_status 切換文字顏色（正式台詞 vs. 系統狀態）。"""
         self.dialogue_var.set(text)
+        self._dialogue_is_status = is_status
         self.dialogue_label.configure(fg=COLOR_STATUS_TEXT if is_status else COLOR_TEXT)
         livliv_link.send_say(text, is_status)
 

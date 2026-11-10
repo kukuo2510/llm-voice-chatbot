@@ -107,5 +107,6 @@ class AvatarInteractionMixin:
         self.avatar_label.configure(image=self._current_frame(is_open=False))
         self.root.geometry(f"{self._avatar_width}x{avatar_height}+{x}+{y}")
         self.dialogue_label.configure(wraplength=self._avatar_width - 24)
+        self._anim_on_resize()
         self._position_input_popup()
         _save_prefs(avatar_width=self._avatar_width)

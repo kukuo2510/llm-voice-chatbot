@@ -60,6 +60,8 @@ class PhysicsMixin:
                 self._fall_velocity = 0.0
                 new_y = surface_y - h
                 new_x = self._advance_wander(x, w, dt)
+                if new_x != x:
+                    self._walk_moved_at = time.monotonic()  # 給走路動畫判斷「真的在水平移動」
 
             if new_x != x or new_y != y:
                 self.root.geometry(f"+{int(new_x)}+{int(new_y)}")
