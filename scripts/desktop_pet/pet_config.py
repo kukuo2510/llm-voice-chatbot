@@ -55,9 +55,12 @@ CABLE_DEVICE_NAME_HINT = "CABLE Input"
 # 立繪相關設定
 # ============================================================
 
-# 立繪素材放在 characters/<角色>/avatar/，跟角色人設、語音設定同一套規則；
-# 要換角色，把這裡的 "sakiko" 換成自己的角色資料夾名稱。
-ASSETS_DIR = Path(__file__).resolve().parents[2] / "characters" / "sakiko" / "avatar"
+# 立繪素材放在 characters/<角色>/avatar/（mouth_closed.png／mouth_open.png），
+# 跟角色人設、語音設定同一套規則。預設用 sakiko；設定環境變數
+# PET_AVATAR_CHARACTER=<角色資料夾名稱> 可以只換立繪（launch_hidden.bat 看到這個變數
+# 會改用不開 LivLiv 舞台的「兩張圖換嘴型」模式）。
+ASSETS_DIR = (Path(__file__).resolve().parents[2] / "characters"
+              / os.environ.get("PET_AVATAR_CHARACTER", "sakiko") / "avatar")
 
 # 立繪顯示寬度（像素）的預設值，高度依素材比例算出來。可以用滑鼠滾輪
 # 即時縮放（見 _on_avatar_scroll），縮放後的大小會被記住，下次啟動時

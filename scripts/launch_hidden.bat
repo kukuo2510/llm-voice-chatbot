@@ -7,7 +7,8 @@ rem something hangs.
 chcp 65001 >nul
 set PYTHONUTF8=1
 set PYTHONUNBUFFERED=1
-set LIVLIV_STAGE=1
+rem PET_AVATAR_CHARACTER set = use that character's two mouth images in the classic window, no LivLiv stage.
+if defined PET_AVATAR_CHARACTER (set LIVLIV_STAGE=0) else (set LIVLIV_STAGE=1)
 cd /d "%~dp0.."
 if not exist logs mkdir logs
 if "%LIVLIV_MODEL%"=="" set "LIVLIV_MODEL=sakiko404"
@@ -30,7 +31,7 @@ for /l %%i in (1,1,90) do (
 
 rem Close a stage left over from a crash (it would hold the UDP port). Only matches livliv-stage.
 powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='electron.exe'\" | Where-Object { $_.CommandLine -match 'livliv-stage' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
-start "" /d "%cd%\..\livliv-stage" "%cd%\..\livliv-stage\node_modules\electron\dist\electron.exe" . --model=%LIVLIV_MODEL%
+if "%LIVLIV_STAGE%"=="1" start "" /d "%cd%\..\livliv-stage" "%cd%\..\livliv-stage\node_modules\electron\dist\electron.exe" . --model=%LIVLIV_MODEL%
 "%TTS_PLATFORM_PYTHON%" scripts\desktop_pet\desktop_pet.py > logs\pet.log 2>&1
 
 rem The pet has exited (quit from its menu, or crashed): close the stage, and the TTS server if we started it.
