@@ -1,0 +1,2235 @@
+{
+ "constants": {
+  "chat": {
+   "CHARACTER_SPEECH_LANGUAGE": "'日文'",
+   "LLM_PROVIDER": "'local'",
+   "MODEL": "'qwen2.5:14b'",
+   "OLLAMA_NUM_CTX": "8192",
+   "OLLAMA_URL": "'http://localhost:11434/api/chat'",
+   "OPENAI_API_KEY": "'test-key'",
+   "OPENAI_CHAT_MODEL": "'gpt-4o-mini'",
+   "OPENAI_CHAT_URL": "'https://api.openai.com/v1/chat/completions'",
+   "PERSONA_PATH": "Path:tests/fixtures/persona_test.md",
+   "TONE_OPTIONS": "['neutral', 'happy', 'serious', 'hesitant', 'intense']",
+   "_TONE_FIELD_INSTRUCTIONS": "'這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）'",
+   "_TW_TERM_FIXES": "{'软件': '軟體', '軟件': '軟體', '网络': '網路', '網絡': '網路', '视频': '影片', '視頻': '影片', '信息': '訊息', '硬盘': '硬碟', '硬碟盤': '硬碟', 'U盘': '隨身碟', 'u盘': '隨身碟', '打印': '列印', '鼠标': '滑鼠', '服务器': '伺服器', '服務器': '伺服器', '程序': '程式', '质量': '品質', '短信': '簡訊'}"
+  },
+  "desktop_pet": {
+   "ASSETS_DIR": "Path:characters/sakiko/avatar",
+   "AVATAR_DISPLAY_WIDTH": "280",
+   "AVATAR_MAX_WIDTH": "600",
+   "AVATAR_MIN_WIDTH": "120",
+   "AVATAR_SCROLL_STEP": "20",
+   "CABLE_DEVICE_NAME_HINT": "'CABLE Input'",
+   "CLAUDE_EVENT_MAX_TRIES": "30",
+   "CLAUDE_EVENT_PORT": "9892",
+   "CLAUDE_EVENT_RETRY_MS": "2000",
+   "COLOR_ACCENT": "'#7c4dbd'",
+   "COLOR_ACCENT_HOVER": "'#5e3690'",
+   "COLOR_BG": "'#15101c'",
+   "COLOR_GOLD": "'#c9a86a'",
+   "COLOR_PANEL": "'#241a30'",
+   "COLOR_STATUS_TEXT": "'#b8a8c8'",
+   "COLOR_TEXT": "'#eee6f5'",
+   "DRAG_THRESHOLD_PX": "3",
+   "FALL_TERMINAL_VELOCITY_PX_S": "1400.0",
+   "GRAVITY_PX_S2": "2200.0",
+   "MAGIC_TRANSPARENT_COLOR": "'#ff00ff'",
+   "MOUTH_HOP_MS": "90",
+   "MOUTH_THRESHOLD_RATIO": "0.3",
+   "PHYSICS_TICK_MS": "33",
+   "PUSH_TO_TALK_KEY_LABEL": "'F9'",
+   "SCREEN_WATCH_INTERVAL_SEC": "45",
+   "SPEECH_LANGUAGE_PRESETS": "['日文', '中文', '英文', '韓文']",
+   "WANDER_MAX_DURATION_SEC": "3.0",
+   "WANDER_MAX_INTERVAL_SEC": "15.0",
+   "WANDER_MIN_DURATION_SEC": "1.0",
+   "WANDER_MIN_INTERVAL_SEC": "5.0",
+   "WANDER_SPEED_PX_S": "110.0",
+   "_AVATAR_RESIZE_DEBOUNCE_MS": "60",
+   "_CLAUDE_EVENT_PROMPTS": "{'waiting': '（主人請來幫忙寫程式的 AI 助手 Claude 停下來了，在等主人按確認才能繼續，主人可能沒注意到。用你平常的口吻提醒主人一句，要短，像是順口提醒，不要提到「通知」這類字眼。）', 'done': '（主人請來幫忙寫程式的 AI 助手 Claude 剛把交辦的工作做完了，前後花了大約 {minutes} 分鐘。用你平常的口吻跟主人說一聲，可以順便誇一下或吐槽一下，要短。）'}",
+   "_GAME_INFO_HINT": "'（關於這個遊戲／作品，網路上查到的資料（可以參考，但用聊天的口吻講，不要照念）：{info}）'",
+   "_LOOKUP_SKIP_PROCESSES": "['applicationframehost.exe', 'brave.exe', 'chrome.exe', 'claude.exe', 'cmd.exe', 'code.exe', 'cursor.exe', 'discord.exe', 'electron.exe', 'excel.exe', 'explorer.exe', 'firefox.exe', 'line.exe', 'ms-teams.exe', 'msedge.exe', 'notepad++.exe', 'notepad.exe', 'obsidian.exe', 'opera.exe', 'potplayermini64.exe', 'powerpnt.exe', 'powershell.exe', 'pwsh.exe', 'python.exe', 'pythonw.exe', 'slack.exe', 'spotify.exe', 'steam.exe', 'steamwebhelper.exe', 'taskmgr.exe', 'teams.exe', 'telegram.exe', 'vlc.exe', 'windowsterminal.exe', 'winword.exe']",
+   "_PET_PREFS_FILE": "Path:scripts/desktop_pet/.pet_prefs.json",
+   "_SCREEN_WATCH_PROMPT_TEMPLATE": "'（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：{caption}。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）'",
+   "_SCREEN_WATCH_REPEAT_HINT": "'（這是你剛才看過的同一個畫面，你已經針對它講過話了。這次**不要再講一樣的內容**，換個角度：聊這款遊戲／這個東西本身、問主人進展、分享你的看法或感想，或閒聊別的；句子開頭也不要跟你前幾句一樣。）'",
+   "_SCREEN_WATCH_WINDOW_HINT": "'（主人現在的視窗標題是「{title}」，程式是 {process}。如果認得出是哪款遊戲、哪部作品或哪個網站，可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）'"
+  }
+ },
+ "constants_dotenv": {
+  "skipped": "已有真的 .env，不覆蓋"
+ },
+ "ctor_default": "BooleanVar#1 <- True\nroot.overrideredirect(True)\nroot.attributes('-topmost', True)\nroot.configure(bg='#ff00ff')\nroot.wm_attributes('-transparentcolor', '#ff00ff')\nroot.geometry('280x400+120+120')\nroot.update_idletasks()\nroot.winfo_id()\nBooleanVar#2 <- True\ntk.Label(root, image=frame_closed, bg='#ff00ff', bd=0, highlightthickness=0) -> Label#1\nLabel#1.place(x=0, y=0, relwidth=1, relheight=1)\nStringVar#1 <- ''\ntk.Label(root, textvariable=StringVar#1, wraplength=256, justify='left', font=['Microsoft JhengHei', 12], fg='#eee6f5', bg='#241a30', padx=10, pady=6) -> Label#2\nLabel#2.place_forget()\nBooleanVar#3 <- False\nBooleanVar#4 <- False\nStringVar#2 <- 'local'\nStringVar#3 <- 'local'\ntk.Menu(root, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#1\nMenu#1.add_command(label='顯示歷史紀錄', command=_toggle_history_window)\nMenu#1.add_checkbutton(label='螢幕讀取主動搭話', variable=BooleanVar#3, command=_on_screen_watch_toggle)\nMenu#1.add_checkbutton(label='遊戲模式（少看螢幕）', variable=BooleanVar#4, command=_on_game_mode_toggle)\nMenu#1.add_checkbutton(label='重力（桌面感）', variable=BooleanVar#2)\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#2\nMenu#2.add_radiobutton(label='本地 Ollama', variable=StringVar#2, value='local', command=_on_llm_provider_change)\nMenu#2.add_radiobutton(label='雲端 OpenAI', variable=StringVar#2, value='openai', command=_on_llm_provider_change)\nMenu#1.add_cascade(label='對話模型', menu=Menu#2)\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#3\nMenu#3.add_radiobutton(label='本地 SenseVoice', variable=StringVar#3, value='local', command=_on_stt_provider_change)\nMenu#3.add_radiobutton(label='雲端 OpenAI Whisper', variable=StringVar#3, value='openai', command=_on_stt_provider_change)\nMenu#1.add_cascade(label='語音辨識', menu=Menu#3)\nStringVar#4 <- '日文'\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#4\nMenu#4.add_radiobutton(label='日文', variable=StringVar#4, value='日文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='中文', variable=StringVar#4, value='中文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='英文', variable=StringVar#4, value='英文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='韓文', variable=StringVar#4, value='韓文', command=_on_speech_language_preset_change)\nMenu#4.add_separator()\nMenu#4.add_command(label='自訂...', command=_prompt_speech_language)\nMenu#1.add_cascade(label='角色說話語言', menu=Menu#4)\nMenu#1.add_checkbutton(label='分段播放（先講先播）', variable=BooleanVar#1, command=_on_chunked_tts_toggle)\nMenu#1.add_command(label='清除對話記憶', command=_on_clear_memory)\nMenu#1.add_separator()\nMenu#1.add_command(label='結束', command=_on_close)\nLabel#1.bind('<ButtonPress-1>', _on_avatar_press)\nLabel#1.bind('<B1-Motion>', _on_avatar_motion)\nLabel#1.bind('<ButtonRelease-1>', _on_avatar_release)\nLabel#1.bind('<Button-3>', _on_avatar_right_click)\nLabel#1.bind('<MouseWheel>', _on_avatar_scroll)\nLabel#2.bind('<ButtonPress-1>', _on_avatar_press)\nLabel#2.bind('<B1-Motion>', _on_avatar_motion)\nLabel#2.bind('<ButtonRelease-1>', _on_avatar_release)\nLabel#2.bind('<Button-3>', _on_avatar_right_click)\nLabel#2.bind('<MouseWheel>', _on_avatar_scroll)\nroot.after(50, _poll_queue)\nroot.after(33, _physics_tick)\ntk.Listener(on_press=_on_key_press, on_release=_on_key_release) -> Listener#1\nListener#1.start()\nroot.protocol('WM_DELETE_WINDOW', _on_close)\nThread(_screen_watch_loop, args=[], daemon=True)\nThread.start(_screen_watch_loop)\nThread(_claude_event_loop, args=[], daemon=True)\nThread.start(_claude_event_loop)\nroot.after(300, _prompt_screen_watch_choice)",
+ "ctor_prefs": "BooleanVar#1 <- False\nroot.overrideredirect(True)\nroot.attributes('-topmost', True)\nroot.configure(bg='#ff00ff')\nroot.wm_attributes('-transparentcolor', '#ff00ff')\nroot.geometry('250x400+120+120')\nroot.update_idletasks()\nroot.winfo_id()\nBooleanVar#2 <- True\ntk.Label(root, image=frame_closed, bg='#ff00ff', bd=0, highlightthickness=0) -> Label#1\nLabel#1.place(x=0, y=0, relwidth=1, relheight=1)\nStringVar#1 <- ''\ntk.Label(root, textvariable=StringVar#1, wraplength=226, justify='left', font=['Microsoft JhengHei', 12], fg='#eee6f5', bg='#241a30', padx=10, pady=6) -> Label#2\nLabel#2.place_forget()\nBooleanVar#3 <- True\nBooleanVar#4 <- True\nStringVar#2 <- 'openai'\nStringVar#3 <- 'openai'\ntk.Menu(root, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#1\nMenu#1.add_command(label='顯示歷史紀錄', command=_toggle_history_window)\nMenu#1.add_checkbutton(label='螢幕讀取主動搭話', variable=BooleanVar#3, command=_on_screen_watch_toggle)\nMenu#1.add_checkbutton(label='遊戲模式（少看螢幕）', variable=BooleanVar#4, command=_on_game_mode_toggle)\nMenu#1.add_checkbutton(label='重力（桌面感）', variable=BooleanVar#2)\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#2\nMenu#2.add_radiobutton(label='本地 Ollama', variable=StringVar#2, value='local', command=_on_llm_provider_change)\nMenu#2.add_radiobutton(label='雲端 OpenAI', variable=StringVar#2, value='openai', command=_on_llm_provider_change)\nMenu#1.add_cascade(label='對話模型', menu=Menu#2)\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#3\nMenu#3.add_radiobutton(label='本地 SenseVoice', variable=StringVar#3, value='local', command=_on_stt_provider_change)\nMenu#3.add_radiobutton(label='雲端 OpenAI Whisper', variable=StringVar#3, value='openai', command=_on_stt_provider_change)\nMenu#1.add_cascade(label='語音辨識', menu=Menu#3)\nStringVar#4 <- '韓文'\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#4\nMenu#4.add_radiobutton(label='日文', variable=StringVar#4, value='日文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='中文', variable=StringVar#4, value='中文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='英文', variable=StringVar#4, value='英文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='韓文', variable=StringVar#4, value='韓文', command=_on_speech_language_preset_change)\nMenu#4.add_separator()\nMenu#4.add_command(label='自訂...', command=_prompt_speech_language)\nMenu#1.add_cascade(label='角色說話語言', menu=Menu#4)\nMenu#1.add_checkbutton(label='分段播放（先講先播）', variable=BooleanVar#1, command=_on_chunked_tts_toggle)\nMenu#1.add_command(label='清除對話記憶', command=_on_clear_memory)\nMenu#1.add_separator()\nMenu#1.add_command(label='結束', command=_on_close)\nLabel#1.bind('<ButtonPress-1>', _on_avatar_press)\nLabel#1.bind('<B1-Motion>', _on_avatar_motion)\nLabel#1.bind('<ButtonRelease-1>', _on_avatar_release)\nLabel#1.bind('<Button-3>', _on_avatar_right_click)\nLabel#1.bind('<MouseWheel>', _on_avatar_scroll)\nLabel#2.bind('<ButtonPress-1>', _on_avatar_press)\nLabel#2.bind('<B1-Motion>', _on_avatar_motion)\nLabel#2.bind('<ButtonRelease-1>', _on_avatar_release)\nLabel#2.bind('<Button-3>', _on_avatar_right_click)\nLabel#2.bind('<MouseWheel>', _on_avatar_scroll)\nroot.after(50, _poll_queue)\nroot.after(33, _physics_tick)\ntk.Listener(on_press=_on_key_press, on_release=_on_key_release) -> Listener#1\nListener#1.start()\nroot.protocol('WM_DELETE_WINDOW', _on_close)\nThread(_screen_watch_loop, args=[], daemon=True)\nThread.start(_screen_watch_loop)\nThread(_claude_event_loop, args=[], daemon=True)\nThread.start(_claude_event_loop)",
+ "ctor_prefs_state": [
+  "'openai'",
+  "'韓文'",
+  "'openai'",
+  "True"
+ ],
+ "ctor_stage": "BooleanVar#1 <- True\nroot.overrideredirect(True)\nroot.attributes('-topmost', True)\nroot.configure(bg='#ff00ff')\nroot.wm_attributes('-transparentcolor', '#ff00ff')\nroot.geometry('280x400+120+120')\nroot.attributes('-alpha', 0)\nroot.update_idletasks()\nroot.winfo_id()\nBooleanVar#2 <- True\ntk.Label(root, image=frame_closed, bg='#ff00ff', bd=0, highlightthickness=0) -> Label#1\nLabel#1.place(x=0, y=0, relwidth=1, relheight=1)\nStringVar#1 <- ''\ntk.Label(root, textvariable=StringVar#1, wraplength=256, justify='left', font=['Microsoft JhengHei', 12], fg='#eee6f5', bg='#241a30', padx=10, pady=6) -> Label#2\nLabel#2.place_forget()\nBooleanVar#3 <- False\nBooleanVar#4 <- False\nStringVar#2 <- 'local'\nStringVar#3 <- 'local'\ntk.Menu(root, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#1\nMenu#1.add_command(label='顯示歷史紀錄', command=_toggle_history_window)\nMenu#1.add_checkbutton(label='螢幕讀取主動搭話', variable=BooleanVar#3, command=_on_screen_watch_toggle)\nMenu#1.add_checkbutton(label='遊戲模式（少看螢幕）', variable=BooleanVar#4, command=_on_game_mode_toggle)\nMenu#1.add_checkbutton(label='重力（桌面感）', variable=BooleanVar#2)\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#2\nMenu#2.add_radiobutton(label='本地 Ollama', variable=StringVar#2, value='local', command=_on_llm_provider_change)\nMenu#2.add_radiobutton(label='雲端 OpenAI', variable=StringVar#2, value='openai', command=_on_llm_provider_change)\nMenu#1.add_cascade(label='對話模型', menu=Menu#2)\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#3\nMenu#3.add_radiobutton(label='本地 SenseVoice', variable=StringVar#3, value='local', command=_on_stt_provider_change)\nMenu#3.add_radiobutton(label='雲端 OpenAI Whisper', variable=StringVar#3, value='openai', command=_on_stt_provider_change)\nMenu#1.add_cascade(label='語音辨識', menu=Menu#3)\nStringVar#4 <- '日文'\ntk.Menu(Menu#1, tearoff=False, bg='#241a30', fg='#eee6f5', activebackground='#7c4dbd', activeforeground='#eee6f5') -> Menu#4\nMenu#4.add_radiobutton(label='日文', variable=StringVar#4, value='日文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='中文', variable=StringVar#4, value='中文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='英文', variable=StringVar#4, value='英文', command=_on_speech_language_preset_change)\nMenu#4.add_radiobutton(label='韓文', variable=StringVar#4, value='韓文', command=_on_speech_language_preset_change)\nMenu#4.add_separator()\nMenu#4.add_command(label='自訂...', command=_prompt_speech_language)\nMenu#1.add_cascade(label='角色說話語言', menu=Menu#4)\nMenu#1.add_checkbutton(label='分段播放（先講先播）', variable=BooleanVar#1, command=_on_chunked_tts_toggle)\nMenu#1.add_command(label='清除對話記憶', command=_on_clear_memory)\nMenu#1.add_separator()\nMenu#1.add_command(label='結束', command=_on_close)\nLabel#1.bind('<ButtonPress-1>', _on_avatar_press)\nLabel#1.bind('<B1-Motion>', _on_avatar_motion)\nLabel#1.bind('<ButtonRelease-1>', _on_avatar_release)\nLabel#1.bind('<Button-3>', _on_avatar_right_click)\nLabel#1.bind('<MouseWheel>', _on_avatar_scroll)\nLabel#2.bind('<ButtonPress-1>', _on_avatar_press)\nLabel#2.bind('<B1-Motion>', _on_avatar_motion)\nLabel#2.bind('<ButtonRelease-1>', _on_avatar_release)\nLabel#2.bind('<Button-3>', _on_avatar_right_click)\nLabel#2.bind('<MouseWheel>', _on_avatar_scroll)\nroot.after(50, _poll_queue)\nroot.after(33, _physics_tick)\nBooleanVar#2.set(False)\nroot.geometry('1x1+120+120')\nlivliv_link.listen\ntk.Listener(on_press=_on_key_press, on_release=_on_key_release) -> Listener#1\nListener#1.start()\nroot.protocol('WM_DELETE_WINDOW', _on_close)\nThread(_screen_watch_loop, args=[], daemon=True)\nThread.start(_screen_watch_loop)\nThread(_claude_event_loop, args=[], daemon=True)\nThread.start(_claude_event_loop)\nroot.after(300, _prompt_screen_watch_choice)",
+ "events": {
+  "chunked_toggle": {
+   "log": [
+    "BooleanVar#1.set(True)",
+    "_save_prefs({'chunked_tts': True})",
+    "return [None, None, True]"
+   ],
+   "stdout": ""
+  },
+  "claude_event_busy": {
+   "log": [
+    "root.after(2000, <lambda defaults=None>)",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "claude_event_busy_giveup": {
+   "log": [
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "claude_event_done": {
+   "log": [
+    "StringVar#1.set('...')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Thread(_handle_message, args=['（主人請來幫忙寫程式的 AI 助手 Claude 剛把交辦的工作做完了，前後花了大約 7 分鐘。用你平常的口吻跟主人說一聲，可以順便誇一下或吐槽一下，要短。）', False], daemon=True)",
+    "Thread.start(_handle_message)",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "claude_event_loop": {
+   "log": [
+    "sock.bind(('127.0.0.1', 9892))",
+    "root.after(0, <lambda defaults=[{'event': 'waiting'}]>)",
+    "root.after(0, <lambda defaults=[{'event': 'done', 'seconds': 120}]>)",
+    "EXC Stop: "
+   ],
+   "stdout": "[claude_event] 收到：{'event': 'waiting'}\n[claude_event] 收到：{'event': 'done', 'seconds': 120}\n"
+  },
+  "claude_event_loop_bind_fail": {
+   "log": [
+    "sock.bind(('127.0.0.1', 9892))",
+    "return None"
+   ],
+   "stdout": "[claude_event] 埠 9892 開不起來，收不到 Claude 的通知：埠被佔用\n"
+  },
+  "claude_event_waiting": {
+   "log": [
+    "StringVar#1.set('...')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Thread(_handle_message, args=['（主人請來幫忙寫程式的 AI 助手 Claude 停下來了，在等主人按確認才能繼續，主人可能沒注意到。用你平常的口吻提醒主人一句，要短，像是順口提醒，不要提到「通知」這類字眼。）', False], daemon=True)",
+    "Thread.start(_handle_message)",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "clear_memory": {
+   "log": [
+    "ConversationHistory.clear()",
+    "StringVar#1.set('（對話記憶已清除）')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "current_frame": {
+   "log": [
+    "return ['frame_open2', 'frame_closed2']"
+   ],
+   "stdout": ""
+  },
+  "current_frame_left": {
+   "log": [
+    "return ['frame_open2', 'frame_closed2']"
+   ],
+   "stdout": ""
+  },
+  "dialogue": {
+   "log": [
+    "StringVar#1.set('文字')",
+    "Label#2.configure(fg='#eee6f5')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "StringVar#1.set('狀態')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "StringVar#1.set('文字')",
+    "Label#2.configure(fg='#eee6f5')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "return [None, None, None, None]"
+   ],
+   "stdout": ""
+  },
+  "drag_release": {
+   "log": [
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.geometry('+140+240')",
+    "root.update_idletasks()",
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.winfo_height()",
+    "Toplevel#1.geometry('+100+604')",
+    "return [None, None, None]"
+   ],
+   "stdout": ""
+  },
+  "game_info_for": {
+   "log": [
+    "Thread(_lookup, args=[], daemon=True)",
+    "Thread.start(_lookup)",
+    "return [None, None, None, None, {'game.exe': None}]"
+   ],
+   "stdout": ""
+  },
+  "game_mode_toggle": {
+   "log": [
+    "BooleanVar#4.set(False)",
+    "_save_prefs({'game_mode': False})",
+    "return [None, None, False]"
+   ],
+   "stdout": ""
+  },
+  "history_text": {
+   "log": [
+    "return '你：typed text\\n\\n你：哈囉\\n\\n祥子：你好\\n\\n'"
+   ],
+   "stdout": ""
+  },
+  "history_toggle_twice": {
+   "log": [
+    "tk.Toplevel(root) -> Toplevel#3",
+    "Toplevel#3.title('歷史紀錄')",
+    "Toplevel#3.configure(bg='#15101c')",
+    "Toplevel#3.geometry('320x400')",
+    "Toplevel#3.attributes('-topmost', True)",
+    "tk.Text(Toplevel#3, wrap='word', state='disabled', font=['Microsoft JhengHei', 12], bg='#241a30', fg='#eee6f5', relief='flat', padx=10, pady=10) -> Text#1",
+    "Text#1.pack(fill='both', expand=True, padx=8, pady=8)",
+    "Text#1.configure(state='normal')",
+    "Text#1.insert('end', '你：typed text\\n\\n')",
+    "Text#1.configure(state='disabled')",
+    "Text#1.see('end')",
+    "Toplevel#3.protocol('WM_DELETE_WINDOW', _on_history_close)",
+    "Menu#1.entryconfig(0, label='隱藏歷史紀錄')",
+    "Text#1.configure(state='normal')",
+    "Text#1.insert('end', '你：哈囉\\n\\n')",
+    "Text#1.configure(state='disabled')",
+    "Text#1.see('end')",
+    "Text#1.configure(state='normal')",
+    "Text#1.insert('end', '祥子：你好\\n\\n')",
+    "Text#1.configure(state='disabled')",
+    "Text#1.see('end')",
+    "StringVar#1.set('你好')",
+    "Label#2.configure(fg='#eee6f5')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Toplevel#3.destroy()",
+    "Menu#1.entryconfig(0, label='顯示歷史紀錄')",
+    "return [None, None, None, None]"
+   ],
+   "stdout": ""
+  },
+  "key_press_busy": {
+   "log": [
+    "return None"
+   ],
+   "stdout": "[ptt] 按下 F9，但還在處理上一句，忽略\n"
+  },
+  "key_press_release": {
+   "log": [
+    "PushToTalkRecorder.start()",
+    "PushToTalkRecorder.stop()",
+    "return [None, None, None, None]"
+   ],
+   "stdout": ""
+  },
+  "llm_provider_change": {
+   "log": [
+    "StringVar#2.set('local')",
+    "_save_prefs({'llm_provider': 'local'})",
+    "return [None, None, 'local']"
+   ],
+   "stdout": ""
+  },
+  "on_close": {
+   "log": [
+    "Listener#1.stop()",
+    "send_quit",
+    "unload_models(['qwen2.5:14b', 'qwen3-vl:2b'])",
+    "root.destroy()",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "physics_falling": {
+   "log": [
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.winfo_width()",
+    "root.winfo_height()",
+    "root.geometry('+100+202')",
+    "root.after(33, _physics_tick)",
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.winfo_width()",
+    "root.winfo_height()",
+    "root.geometry('+100+204')",
+    "root.after(33, _physics_tick)",
+    "return [None, None, 145.20000000000002]"
+   ],
+   "stdout": ""
+  },
+  "physics_landed_wander": {
+   "log": [
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.winfo_width()",
+    "root.winfo_height()",
+    "Label#1.configure(image=frame_closed2)",
+    "root.after(33, _physics_tick)",
+    "Label#1.configure(image=frame_closed2)",
+    "root.winfo_screenwidth()",
+    "root.winfo_screenwidth()",
+    "return [None, None, 96.37, 96.37]"
+   ],
+   "stdout": ""
+  },
+  "poll_queue": {
+   "log": [
+    "StringVar#1.set('譯文')",
+    "Label#2.configure(fg='#eee6f5')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Label#1.configure(image=frame_open2)",
+    "invoke_menu([1])",
+    "StringVar#1.set('壞了')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "root.after(50, _poll_queue)",
+    "return False"
+   ],
+   "stdout": ""
+  },
+  "popup_hide": {
+   "log": [
+    "Toplevel#1.destroy()",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "popup_show_submit": {
+   "log": [
+    "tk.Toplevel(root) -> Toplevel#2",
+    "Toplevel#2.overrideredirect(True)",
+    "Toplevel#2.attributes('-topmost', True)",
+    "Toplevel#2.configure(bg='#7c4dbd')",
+    "tk.Frame(Toplevel#2, bg='#241a30') -> Frame#2",
+    "Frame#2.pack(padx=1, pady=1)",
+    "tk.Entry(Frame#2, font=['Microsoft JhengHei', 13], bg='#241a30', fg='#eee6f5', insertbackground='#eee6f5', relief='flat', width=26) -> Entry#2",
+    "Entry#2.pack(padx=8, pady=6)",
+    "Entry#2.bind('<Return>', _on_popup_submit)",
+    "Entry#2.bind('<Escape>', <lambda defaults=None>)",
+    "Entry#2.bind('<FocusOut>', <lambda defaults=None>)",
+    "root.update_idletasks()",
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.winfo_height()",
+    "Toplevel#2.geometry('+100+604')",
+    "Entry#2.focus_force()",
+    "Entry#2.get()",
+    "Toplevel#2.destroy()",
+    "StringVar#1.set('...')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Thread(_handle_message, args=['typed text'], daemon=True)",
+    "Thread.start(_handle_message)",
+    "return [None, None]"
+   ],
+   "stdout": ""
+  },
+  "press_motion_release_click": {
+   "log": [
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.geometry('+100+200')",
+    "tk.Toplevel(root) -> Toplevel#1",
+    "Toplevel#1.overrideredirect(True)",
+    "Toplevel#1.attributes('-topmost', True)",
+    "Toplevel#1.configure(bg='#7c4dbd')",
+    "tk.Frame(Toplevel#1, bg='#241a30') -> Frame#1",
+    "Frame#1.pack(padx=1, pady=1)",
+    "tk.Entry(Frame#1, font=['Microsoft JhengHei', 13], bg='#241a30', fg='#eee6f5', insertbackground='#eee6f5', relief='flat', width=26) -> Entry#1",
+    "Entry#1.pack(padx=8, pady=6)",
+    "Entry#1.bind('<Return>', _on_popup_submit)",
+    "Entry#1.bind('<Escape>', <lambda defaults=None>)",
+    "Entry#1.bind('<FocusOut>', <lambda defaults=None>)",
+    "root.update_idletasks()",
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.winfo_height()",
+    "Toplevel#1.geometry('+100+604')",
+    "Entry#1.focus_force()",
+    "return [None, None, None]"
+   ],
+   "stdout": ""
+  },
+  "prompt_screen_watch_choice": {
+   "log": [
+    "tk.Toplevel(root) -> Toplevel#5",
+    "Toplevel#5.title('螢幕讀取主動搭話')",
+    "Toplevel#5.configure(bg='#241a30')",
+    "Toplevel#5.resizable(False, False)",
+    "Toplevel#5.attributes('-topmost', True)",
+    "Toplevel#5.transient(root)",
+    "tk.Label(Toplevel#5, text='要不要讓她偶爾看一眼你的螢幕、自己決定要不要主動找你講話？\\n（截圖只會送去本地看圖模型，有排除清單保護敏感視窗，細節見 README）', justify='left', wraplength=320, font=['Microsoft JhengHei', 11], fg='#eee6f5', bg='#241a30', padx=16, pady=12) -> Label#4",
+    "Label#4.pack()",
+    "BooleanVar#5 <- False",
+    "tk.Checkbutton(Toplevel#5, text='記住這個選擇，下次啟動不再詢問', variable=BooleanVar#5, font=['Microsoft JhengHei', 10], fg='#eee6f5', bg='#241a30', selectcolor='#15101c', activebackground='#241a30', activeforeground='#eee6f5') -> Checkbutton#1",
+    "Checkbutton#1.pack(padx=16, pady=[0, 8], anchor='w')",
+    "tk.Frame(Toplevel#5, bg='#241a30') -> Frame#4",
+    "Frame#4.pack(padx=16, pady=[0, 14])",
+    "tk.Button(Frame#4, text='開啟', command=<lambda defaults=None>, bg='#7c4dbd', fg='#eee6f5', activebackground='#5e3690', relief='flat', padx=14, pady=4) -> Button#3",
+    "Button#3.pack(side='left', padx=[0, 8])",
+    "tk.Button(Frame#4, text='先不要', command=<lambda defaults=None>, bg='#15101c', fg='#eee6f5', activebackground='#241a30', relief='flat', padx=14, pady=4) -> Button#4",
+    "Button#4.pack(side='left')",
+    "Toplevel#5.protocol('WM_DELETE_WINDOW', <lambda defaults=None>)",
+    "Toplevel#5.update_idletasks()",
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.winfo_height()",
+    "Toplevel#5.geometry('+100+608')",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "prompt_speech_language": {
+   "log": [
+    "tk.Toplevel(root) -> Toplevel#4",
+    "Toplevel#4.title('角色說話語言')",
+    "Toplevel#4.configure(bg='#241a30')",
+    "Toplevel#4.resizable(False, False)",
+    "Toplevel#4.attributes('-topmost', True)",
+    "Toplevel#4.transient(root)",
+    "tk.Label(Toplevel#4, text='角色開口說話要用什麼語言？（直接輸入語言名稱，例如：日文／英文／韓文）', justify='left', wraplength=320, font=['Microsoft JhengHei', 11], fg='#eee6f5', bg='#241a30', padx=16, pady=12) -> Label#3",
+    "Label#3.pack()",
+    "tk.Entry(Toplevel#4, font=['Microsoft JhengHei', 13], bg='#15101c', fg='#eee6f5', insertbackground='#eee6f5', relief='flat', width=20) -> Entry#3",
+    "Entry#3.insert(0, '中文')",
+    "Entry#3.select_range(0, 'end')",
+    "Entry#3.pack(padx=16, pady=[0, 10])",
+    "Entry#3.focus_force()",
+    "tk.Frame(Toplevel#4, bg='#241a30') -> Frame#3",
+    "Frame#3.pack(padx=16, pady=[0, 14])",
+    "Entry#3.bind('<Return>', _confirm)",
+    "Entry#3.bind('<Escape>', <lambda defaults=None>)",
+    "tk.Button(Frame#3, text='確定', command=_confirm, bg='#7c4dbd', fg='#eee6f5', activebackground='#5e3690', relief='flat', padx=14, pady=4) -> Button#1",
+    "Button#1.pack(side='left', padx=[0, 8])",
+    "tk.Button(Frame#3, text='取消', command=Toplevel#4.destroy, bg='#15101c', fg='#eee6f5', activebackground='#241a30', relief='flat', padx=14, pady=4) -> Button#2",
+    "Button#2.pack(side='left')",
+    "Toplevel#4.update_idletasks()",
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "root.winfo_height()",
+    "Toplevel#4.geometry('+100+608')",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "ptt_state": {
+   "log": [
+    "root.after(0, _update)",
+    "root.after(0, _update)",
+    "root.after(0, <lambda defaults=None>)",
+    "return [None, None, None]"
+   ],
+   "stdout": ""
+  },
+  "queue_mouth_state": {
+   "log": [
+    "return [None, ['mouth', True]]"
+   ],
+   "stdout": ""
+  },
+  "right_click": {
+   "log": [
+    "Menu#1.tk_popup(10, 20)",
+    "return None"
+   ],
+   "stdout": ""
+  },
+  "screen_loop_busy": {
+   "log": [
+    "return 41"
+   ],
+   "stdout": "[screen_watch] 等了超過一分鐘還不能看：busy=True\n[screen_watch] 等了超過一分鐘還不能看：busy=True\n"
+  },
+  "screen_loop_disabled": {
+   "log": [
+    "return 41"
+   ],
+   "stdout": ""
+  },
+  "screen_loop_enabled": {
+   "log": [
+    "Thread(_lookup, args=[], daemon=True)",
+    "Thread.start(_lookup)",
+    "root.after(0, <lambda defaults=['（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：一個遊戲畫面。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）（主人現在的視窗標題是「標題」，程式是 game.exe。如果認得出是哪款遊戲、哪部作品或哪個網站，可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）']>)",
+    "root.after(0, <lambda defaults=['（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：一個遊戲畫面。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）（主人現在的視窗標題是「標題」，程式是 game.exe。如果認得出是哪款遊戲、哪部作品或哪個網站，可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）']>)",
+    "root.after(0, <lambda defaults=['（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：一個遊戲畫面。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）（主人現在的視窗標題是「標題」，程式是 game.exe。如果認得出是哪款遊戲、哪部作品或哪個網站，可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）']>)",
+    "root.after(0, <lambda defaults=['（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：一個遊戲畫面。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）（主人現在的視窗標題是「標題」，程式是 game.exe。如果認得出是哪款遊戲、哪部作品或哪個網站，可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）']>)",
+    "return 41"
+   ],
+   "stdout": ""
+  },
+  "screen_loop_popup": {
+   "log": [
+    "return 41"
+   ],
+   "stdout": "[screen_watch] 等了超過一分鐘還不能看：busy=False\n[screen_watch] 等了超過一分鐘還不能看：busy=False\n"
+  },
+  "screen_watch_toggle": {
+   "log": [
+    "BooleanVar#3.set(False)",
+    "_save_prefs({'screen_watch_enabled': False})",
+    "return [None, None, False]"
+   ],
+   "stdout": ""
+  },
+  "scroll_up_down_apply": {
+   "log": [
+    "root.after(60, _apply_avatar_resize)",
+    "root.after_cancel(root.after())",
+    "root.after(60, _apply_avatar_resize)",
+    "root.after_cancel(root.after())",
+    "root.after(60, _apply_avatar_resize)",
+    "root.winfo_x()",
+    "root.winfo_y()",
+    "Label#1.configure(image=frame_closed2)",
+    "root.geometry('230x300+100+200')",
+    "Label#2.configure(wraplength=206)",
+    "_save_prefs({'avatar_width': 230})",
+    "return [None, None, None, None, None]"
+   ],
+   "stdout": ""
+  },
+  "speech_language_change": {
+   "log": [
+    "StringVar#4.set('中文')",
+    "_save_prefs({'character_speech_language': '中文'})",
+    "return [None, None, '中文']"
+   ],
+   "stdout": ""
+  },
+  "stage_events": {
+   "log": [
+    "StringVar#1.set('...')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Thread(_handle_message, args=['打字'], daemon=True)",
+    "Thread.start(_handle_message)",
+    "root.geometry('1x1+5+6')",
+    "send_menu('described')",
+    "invoke_menu([0])",
+    "return [None, None, None, None]"
+   ],
+   "stdout": ""
+  },
+  "stt_provider_change": {
+   "log": [
+    "StringVar#3.set('local')",
+    "_save_prefs({'stt_provider': 'local'})",
+    "return [None, None, 'local']"
+   ],
+   "stdout": ""
+  },
+  "submit": {
+   "log": [
+    "StringVar#1.set('...')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Thread(_handle_message, args=['哈囉'], daemon=True)",
+    "Thread.start(_handle_message)",
+    "return [None, None, True]"
+   ],
+   "stdout": ""
+  },
+  "trigger_proactive": {
+   "log": [
+    "StringVar#1.set('...')",
+    "Label#2.configure(fg='#b8a8c8')",
+    "Label#2.place(relx=0.5, rely=1.0, anchor='s', relwidth=1)",
+    "Thread(_handle_message, args=['提示', False], daemon=True)",
+    "Thread.start(_handle_message)",
+    "return [None, None]"
+   ],
+   "stdout": ""
+  },
+  "wander_due": {
+   "log": [
+    "root.winfo_screenwidth()",
+    "return [96.37, 0.9009999999999999, 'left']"
+   ],
+   "stdout": ""
+  }
+ },
+ "flow": {
+  "asked_to_search": {
+   "conv": [
+    [
+     "幫我查一下",
+     "{\"reply_speech\": \"〔開心〕こんにちは。元気ですか？今日もいい天気ですね。\", \"tone\": \"neutral\"}"
+    ]
+   ],
+   "http": [
+    {
+     "last": "[TS] 幫我查一下\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "物的正式名稱；如果是私事、你的記憶、感受這種查不到的，只回〔不用查〕。）\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "こんにちは。元気ですか？今日もいい天気ですね。",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "last_kind": "done",
+   "log": [],
+   "mouth_seq": [
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   "others": [
+    "('done', None)",
+    "('reply', '翻譯結果')"
+   ],
+   "sd": [
+    "write(0, 16000, 1)(4800,)float32",
+    "write(0, 16000, 1)(4800,)float32",
+    "write(1, 16000, 1)(4800,)float32",
+    "write(1, 16000, 1)(4800,)float32"
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n",
+   "synth": [
+    [
+     "こんにちは。",
+     "happy"
+    ],
+    [
+     "元気ですか？今日もいい天気ですね。",
+     "neutral"
+    ]
+   ]
+  },
+  "bad_json": {
+   "conv": [],
+   "http": [
+    {
+     "last": "[TS] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "last_kind": "error",
+   "log": [],
+   "mouth_seq": [],
+   "others": [
+    "('error', \"對話生成失敗：LLM 回傳的格式不符預期，原始內容：'not json'\")"
+   ],
+   "sd": [],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n",
+   "synth": []
+  },
+  "lookup": {
+   "conv": [
+    [
+     "你好",
+     "{\"reply_speech\": \"〔查：原神〕\", \"tone\": \"serious\"}"
+    ],
+    [
+     "（你剛剛查了「原神」，查到的資料如下：\n查到:原神\n根據這些資料，用你平常的口吻回答主人剛才的問題，挑重點講、不要照念；資料沒提到的就說不確定，不要再查一次。）",
+     "{\"reply_speech\": \"調べました。〔生氣〕すごい。\", \"tone\": \"serious\"}"
+    ]
+   ],
+   "http": [
+    {
+     "last": "[TS] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "剛才的問題，挑重點講、不要照念；資料沒提到的就說不確定，不要再查一次。）\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "調べました。すごい。",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "last_kind": "done",
+   "log": [
+    "root.after(0, <lambda defaults=['原神']>)"
+   ],
+   "mouth_seq": [
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   "others": [
+    "('done', None)",
+    "('reply', '翻譯結果')"
+   ],
+   "sd": [
+    "write(0, 16000, 1)(4800,)float32",
+    "write(1, 16000, 1)(4800,)float32"
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n",
+   "synth": [
+    [
+     "調べました。すごい。",
+     "serious"
+    ]
+   ]
+  },
+  "no_lookup_allowed": {
+   "conv": [
+    [
+     "你好",
+     "{\"reply_speech\": \"よく知りません。\", \"tone\": \"hesitant\"}"
+    ]
+   ],
+   "http": [
+    {
+     "last": "[TS] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "よく知りません。",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "last_kind": "done",
+   "log": [],
+   "mouth_seq": [
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   "others": [
+    "('done', None)",
+    "('reply', '翻譯結果')"
+   ],
+   "sd": [
+    "write(0, 16000, 1)(4800,)float32",
+    "write(1, 16000, 1)(4800,)float32"
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n",
+   "synth": [
+    [
+     "よく知りません。",
+     "hesitant"
+    ]
+   ]
+  },
+  "plain_chunked": {
+   "conv": [
+    [
+     "你好",
+     "{\"reply_speech\": \"〔開心〕こんにちは。元気ですか？今日もいい天気ですね。\", \"tone\": \"neutral\"}"
+    ]
+   ],
+   "http": [
+    {
+     "last": "[TS] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "こんにちは。元気ですか？今日もいい天気ですね。",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "last_kind": "done",
+   "log": [],
+   "mouth_seq": [
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   "others": [
+    "('done', None)",
+    "('reply', '翻譯結果')"
+   ],
+   "sd": [
+    "write(0, 16000, 1)(4800,)float32",
+    "write(0, 16000, 1)(4800,)float32",
+    "write(1, 16000, 1)(4800,)float32",
+    "write(1, 16000, 1)(4800,)float32"
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n",
+   "synth": [
+    [
+     "こんにちは。",
+     "happy"
+    ],
+    [
+     "元気ですか？今日もいい天気ですね。",
+     "neutral"
+    ]
+   ]
+  },
+  "plain_unchunked": {
+   "conv": [
+    [
+     "你好",
+     "{\"reply_speech\": \"〔開心〕こんにちは。元気ですか？今日もいい天気ですね。\", \"tone\": \"neutral\"}"
+    ]
+   ],
+   "http": [
+    {
+     "last": "[TS] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "こんにちは。元気ですか？今日もいい天気ですね。",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "last_kind": "done",
+   "log": [],
+   "mouth_seq": [
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   "others": [
+    "('done', None)",
+    "('reply', '翻譯結果')"
+   ],
+   "sd": [
+    "write(0, 16000, 1)(4800,)float32",
+    "write(1, 16000, 1)(4800,)float32"
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n",
+   "synth": [
+    [
+     "こんにちは。元気ですか？今日もいい天気ですね。",
+     "happy"
+    ]
+   ]
+  },
+  "produce_audio_error": [
+   "'error'"
+  ],
+  "unsure_lookup": {
+   "conv": [
+    [
+     "你好",
+     "{\"reply_speech\": \"よく知りません。\", \"tone\": \"hesitant\"}"
+    ],
+    [
+     "（你剛剛查了「新遊戲」，查到的資料如下：\n查到:新遊戲\n根據這些資料，用你平常的口吻回答主人剛才的問題，挑重點講、不要照念；資料沒提到的就說不確定，不要再查一次。）",
+     "{\"reply_speech\": \"分かりました。\", \"tone\": \"hesitant\"}"
+    ]
+   ],
+   "http": [
+    {
+     "last": "[TS] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "物的正式名稱；如果是私事、你的記憶、感受這種查不到的，只回〔不用查〕。）\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "剛才的問題，挑重點講、不要照念；資料沒提到的就說不確定，不要再查一次。）\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "last": "分かりました。",
+     "n_msgs": 2,
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "last_kind": "done",
+   "log": [
+    "root.after(0, <lambda defaults=['新遊戲']>)"
+   ],
+   "mouth_seq": [
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   "others": [
+    "('done', None)",
+    "('reply', '翻譯結果')"
+   ],
+   "sd": [
+    "write(0, 16000, 1)(4800,)float32",
+    "write(1, 16000, 1)(4800,)float32"
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n",
+   "synth": [
+    [
+     "分かりました。",
+     "hesitant"
+    ]
+   ]
+  }
+ },
+ "instance_attrs": [
+  "_avatar_resize_job",
+  "_avatar_width",
+  "_busy",
+  "_chunked_tts",
+  "_chunked_tts_var",
+  "_context_menu",
+  "_conversation",
+  "_drag_origin",
+  "_dragged",
+  "_facing",
+  "_fall_velocity",
+  "_game_mode_var",
+  "_history_text",
+  "_history_text_widget",
+  "_history_window",
+  "_hwnd",
+  "_input_entry",
+  "_input_popup",
+  "_last_reply_text",
+  "_llm_provider_var",
+  "_mouse_down",
+  "_next_wander_at",
+  "_pending_avatar_width",
+  "_physics_enabled_var",
+  "_ptt_listener",
+  "_ptt_recorder",
+  "_remember_screen_watch",
+  "_screen_watch_enabled",
+  "_screen_watch_var",
+  "_speech_language_var",
+  "_stt_provider_var",
+  "_task_queue",
+  "_walk_seconds_left",
+  "_win_origin",
+  "avatar_label",
+  "dialogue_label",
+  "dialogue_var",
+  "frame_closed",
+  "frame_closed_l",
+  "frame_open",
+  "frame_open_l",
+  "root"
+ ],
+ "instance_attrs_prefs": [
+  "_avatar_resize_job",
+  "_avatar_width",
+  "_busy",
+  "_chunked_tts",
+  "_chunked_tts_var",
+  "_context_menu",
+  "_conversation",
+  "_drag_origin",
+  "_dragged",
+  "_facing",
+  "_fall_velocity",
+  "_game_mode_var",
+  "_history_text",
+  "_history_text_widget",
+  "_history_window",
+  "_hwnd",
+  "_input_entry",
+  "_input_popup",
+  "_last_reply_text",
+  "_llm_provider_var",
+  "_mouse_down",
+  "_next_wander_at",
+  "_pending_avatar_width",
+  "_physics_enabled_var",
+  "_ptt_listener",
+  "_ptt_recorder",
+  "_remember_screen_watch",
+  "_screen_watch_enabled",
+  "_screen_watch_var",
+  "_speech_language_var",
+  "_stt_provider_var",
+  "_task_queue",
+  "_walk_seconds_left",
+  "_win_origin",
+  "avatar_label",
+  "dialogue_label",
+  "dialogue_var",
+  "frame_closed",
+  "frame_closed_l",
+  "frame_open",
+  "frame_open_l",
+  "root"
+ ],
+ "llm_toggles": [
+  {
+   "http": [
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "lang": "日文",
+   "provider": "local",
+   "results": [
+    {
+     "reply_speech": "こんにちは",
+     "tone": "happy"
+    },
+    "你好，这个軟體",
+    {
+     "reply_speech": "こんにちは",
+     "reply_zh": "你好，这个軟體",
+     "tone": "happy"
+    }
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n"
+  },
+  {
+   "http": [
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用英文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的英文翻譯，把使用者提供的英文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用英文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的英文翻譯，把使用者提供的英文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "lang": "英文",
+   "provider": "local",
+   "results": [
+    {
+     "reply_speech": "こんにちは",
+     "tone": "happy"
+    },
+    "你好，这个軟體",
+    {
+     "reply_speech": "こんにちは",
+     "reply_zh": "你好，这个軟體",
+     "tone": "happy"
+    }
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n"
+  },
+  {
+   "http": [
+    {
+     "auth": "Bearer test-key",
+     "payload": {
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "gpt-4o-mini",
+      "response_format": {
+       "type": "json_object"
+      }
+     },
+     "url": "https://api.openai.com/v1/chat/completions"
+    },
+    {
+     "auth": "Bearer test-key",
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "gpt-4o-mini"
+     },
+     "url": "https://api.openai.com/v1/chat/completions"
+    },
+    {
+     "auth": "Bearer test-key",
+     "payload": {
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "gpt-4o-mini",
+      "response_format": {
+       "type": "json_object"
+      }
+     },
+     "url": "https://api.openai.com/v1/chat/completions"
+    },
+    {
+     "auth": "Bearer test-key",
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "gpt-4o-mini"
+     },
+     "url": "https://api.openai.com/v1/chat/completions"
+    }
+   ],
+   "lang": "日文",
+   "provider": "openai",
+   "results": [
+    {
+     "reply_speech": "こんにちは",
+     "tone": "happy"
+    },
+    "你好，这个軟體",
+    {
+     "reply_speech": "こんにちは",
+     "reply_zh": "你好，这个軟體",
+     "tone": "happy"
+    }
+   ],
+   "stdout": "[chat] 對話走雲端 OpenAI（gpt-4o-mini）\n[chat] 對話走雲端 OpenAI（gpt-4o-mini）\n[chat] 對話走雲端 OpenAI（gpt-4o-mini）\n[chat] 對話走雲端 OpenAI（gpt-4o-mini）\n"
+  },
+  {
+   "http": [
+    {
+     "auth": "Bearer test-key",
+     "payload": {
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用英文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "gpt-4o-mini",
+      "response_format": {
+       "type": "json_object"
+      }
+     },
+     "url": "https://api.openai.com/v1/chat/completions"
+    },
+    {
+     "auth": "Bearer test-key",
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的英文翻譯，把使用者提供的英文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "gpt-4o-mini"
+     },
+     "url": "https://api.openai.com/v1/chat/completions"
+    },
+    {
+     "auth": "Bearer test-key",
+     "payload": {
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用英文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "gpt-4o-mini",
+      "response_format": {
+       "type": "json_object"
+      }
+     },
+     "url": "https://api.openai.com/v1/chat/completions"
+    },
+    {
+     "auth": "Bearer test-key",
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的英文翻譯，把使用者提供的英文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "gpt-4o-mini"
+     },
+     "url": "https://api.openai.com/v1/chat/completions"
+    }
+   ],
+   "lang": "英文",
+   "provider": "openai",
+   "results": [
+    {
+     "reply_speech": "こんにちは",
+     "tone": "happy"
+    },
+    "你好，这个軟體",
+    {
+     "reply_speech": "こんにちは",
+     "reply_zh": "你好，这个軟體",
+     "tone": "happy"
+    }
+   ],
+   "stdout": "[chat] 對話走雲端 OpenAI（gpt-4o-mini）\n[chat] 對話走雲端 OpenAI（gpt-4o-mini）\n[chat] 對話走雲端 OpenAI（gpt-4o-mini）\n[chat] 對話走雲端 OpenAI（gpt-4o-mini）\n"
+  },
+  {
+   "http": [
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用日文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "lang": "日文",
+   "provider": "local",
+   "results": [
+    {
+     "reply_speech": "こんにちは",
+     "tone": "happy"
+    },
+    "你好，这个軟體",
+    {
+     "reply_speech": "こんにちは",
+     "reply_zh": "你好，这个軟體",
+     "tone": "happy"
+    }
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n"
+  },
+  {
+   "http": [
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用英文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的英文翻譯，把使用者提供的英文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] 你好\n\n（reply_speech 只能用英文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    },
+    {
+     "auth": null,
+     "payload": {
+      "messages": [
+       {
+        "content": "你是專業的英文翻譯，把使用者提供的英文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+        "role": "system"
+       },
+       {
+        "content": "こんにちは",
+        "role": "user"
+       }
+      ],
+      "model": "qwen2.5:14b",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    }
+   ],
+   "lang": "英文",
+   "provider": "local",
+   "results": [
+    {
+     "reply_speech": "こんにちは",
+     "tone": "happy"
+    },
+    "你好，这个軟體",
+    {
+     "reply_speech": "こんにちは",
+     "reply_zh": "你好，这个軟體",
+     "tone": "happy"
+    }
+   ],
+   "stdout": "[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n[chat] 對話走本地 Ollama（qwen2.5:14b）\n"
+  },
+  {
+   "model_switch": [
+    {
+     "auth": null,
+     "payload": {
+      "format": "json",
+      "messages": [
+       {
+        "content": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述\n\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+        "role": "system"
+       },
+       {
+        "content": "[2023-11-15 06:13] hi\n\n（reply_speech 只能用英文，不能夾雜其他語言；〔〕表情標記除外。主人提到的作品、遊戲、人物、新聞，如果你說不出具體內容，就不要裝懂，只回〔查：關鍵字〕）",
+        "role": "user"
+       }
+      ],
+      "model": "other-model",
+      "options": {
+       "num_ctx": 8192
+      },
+      "stream": false,
+      "think": false
+     },
+     "url": "http://localhost:11434/api/chat"
+    }
+   ]
+  }
+ ],
+ "prefs": [
+  "{}",
+  "{'a': 2, 'b': '中'}",
+  "{\"a\": 2, \"b\": \"中\"}",
+  "{}"
+ ],
+ "prefs_path": "scripts/desktop_pet/.pet_prefs.json",
+ "produce_audio_is_static": true,
+ "pure": {
+  "chat._build_output_format_instructions": "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+  "chat._build_speech_only_output_format_instructions": "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+  "chat._build_zh_translate_system_prompt": "你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。",
+  "chat._fix_tw_terms": [
+   "这个軟體的網路影片品質很好",
+   "軟體 網路 影片 訊息 硬碟 隨身碟 隨身碟 列印 滑鼠 伺服器 伺服器 程式 簡訊",
+   "沒有需要取代的字",
+   "",
+   "硬碟 硬碟硬碟"
+  ],
+  "chat._load_persona_text": "## 角色\n\n你是一個住在使用者電腦裡的 AI 助手（測試用人設，不對應任何真實作品角色）。\n說話溫和、簡潔，喜歡聊遊戲和科技。\n\n## 說話規則\n\n- 不要重複同樣的開頭\n- 不寫動作描述",
+  "chat._reply_speech_field_instructions": "用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查",
+  "chat.by_language": {
+   "中文": [
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用中文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的中文。這欄位絕對不能出現任何一個非中文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成中文裡道地的講法——如果是中文沒有的外來語詞彙，要轉換成中文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是中文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用中文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的中文。這欄位絕對不能出現任何一個非中文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成中文裡道地的講法——如果是中文沒有的外來語詞彙，要轉換成中文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是中文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "你是專業的中文翻譯，把使用者提供的中文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。"
+   ],
+   "日文": [
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用日文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的日文。這欄位絕對不能出現任何一個非日文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成日文裡道地的講法——如果是日文沒有的外來語詞彙，要轉換成日文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是日文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "你是專業的日文翻譯，把使用者提供的日文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。"
+   ],
+   "英文": [
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用英文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的英文。這欄位絕對不能出現任何一個非英文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成英文裡道地的講法——如果是英文沒有的外來語詞彙，要轉換成英文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是英文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "你是專業的英文翻譯，把使用者提供的英文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。"
+   ],
+   "西班牙文": [
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用西班牙文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的西班牙文。這欄位絕對不能出現任何一個非西班牙文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成西班牙文裡道地的講法——如果是西班牙文沒有的外來語詞彙，要轉換成西班牙文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是西班牙文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用西班牙文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的西班牙文。這欄位絕對不能出現任何一個非西班牙文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成西班牙文裡道地的講法——如果是西班牙文沒有的外來語詞彙，要轉換成西班牙文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是西班牙文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "你是專業的西班牙文翻譯，把使用者提供的西班牙文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。"
+   ],
+   "韓文": [
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用韓文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的韓文。這欄位絕對不能出現任何一個非韓文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成韓文裡道地的講法——如果是韓文沒有的外來語詞彙，要轉換成韓文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是韓文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"reply_zh\": \"reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "\n使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、\n距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。\n你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：\n{\n  \"reply_speech\": \"用韓文，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、適合唸出來的韓文。這欄位絕對不能出現任何一個非韓文的原文文字（中文字、英文字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成韓文裡道地的講法——如果是韓文沒有的外來語詞彙，要轉換成韓文的外來語發音寫法，不能照抄原文字母；寫完之後自己檢查一遍，確認整句都是韓文才輸出。長度：像聊天一樣簡短，最多 3 句，整段大約是中文 60 個字以內的份量，寧可短一點，不要長篇大論。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來。如果主人問的事你不確定、或可能是你不知道的新資訊（新遊戲、新角色、改版、新聞、你沒聽過的東西），這次的 reply_speech 只寫〔查：要查的關鍵字〕，不要寫別的，程式會幫你查，查完會再請你回答；確定知道的就直接回答，不要沒事亂查\",\n  \"tone\": \"這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）\"\n}\n",
+    "你是專業的韓文翻譯，把使用者提供的韓文句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣\n（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。\n\n原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，\n不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、\n「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」\n「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。\n\n樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、\nMorfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」\n這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。\n\n只回傳翻譯後的中文句子，不要有其他文字、不要加引號。"
+   ]
+  },
+  "desktop_pet._mouth_envelope": [
+   [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false
+   ],
+   [
+    false,
+    false,
+    false
+   ],
+   [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true
+   ],
+   []
+  ],
+  "desktop_pet._screen_watch_prompt": [
+   "（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：一個遊戲畫面。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）（主人現在的視窗標題是「原神」，程式是 genshin.exe。如果認得出是哪款遊戲、哪部作品或哪個網站，可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）（關於這個遊戲／作品，網路上查到的資料（可以參考，但用聊天的口吻講，不要照念）：info 資料）",
+   "（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：一個遊戲畫面。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）（這是你剛才看過的同一個畫面，你已經針對它講過話了。這次**不要再講一樣的內容**，換個角度：聊這款遊戲／這個東西本身、問主人進展、分享你的看法或感想，或閒聊別的；句子開頭也不要跟你前幾句一樣。）",
+   "（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：一個遊戲畫面。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）",
+   "（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：一個遊戲畫面。用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）（主人現在的視窗標題是「T」，程式是 未知。如果認得出是哪款遊戲、哪部作品或哪個網站，可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）（關於這個遊戲／作品，網路上查到的資料（可以參考，但用聊天的口吻講，不要照念）：x）（這是你剛才看過的同一個畫面，你已經針對它講過話了。這次**不要再講一樣的內容**，換個角度：聊這款遊戲／這個東西本身、問主人進展、分享你的看法或感想，或閒聊別的；句子開頭也不要跟你前幾句一樣。）"
+  ],
+  "expressions.instructions": "。可以在 reply_speech 裡插表情標記，格式是〔詞〕，詞只能從這些選：平常、開心、得意、害羞、生氣、不屑、驚訝、難過、無奈、想事情、睏。標記放在表情改變的那個位置——例如句首定調、或講到一半語氣轉折的地方，同一個表情放的位置不同，看起來就是不同的人，所以要放準。一則回覆通常 1～3 個，不需要每句都加。標記不會被唸出來，也不算違反上面的語言規定。台詞本身也要跟表情一致，用說話語言裡自然的語氣詞帶出情緒，例如不屑時「ふん」／「哼」、驚訝時「えっ」／「欸」、無奈時「はぁ……」／「唉……」、想事情時「うーん」／「嗯……」，不要每句都用，語氣詞也算在台詞裡，會被唸出來",
+  "expressions.split_chunks": [
+   [
+    [
+     "こんにちは。",
+     [
+      {
+       "at": 0.0,
+       "expr": "害羞"
+      }
+     ]
+    ],
+    [
+     "元気？",
+     [
+      {
+       "at": 1.0,
+       "expr": "開心"
+      },
+      {
+       "at": 1.0,
+       "expr": "生氣"
+      }
+     ]
+    ]
+   ],
+   []
+  ],
+  "expressions.split_tags": [
+   [
+    "こんにちは。元気？",
+    [
+     {
+      "at": 0.0,
+      "expr": "害羞"
+     },
+     {
+      "at": 0.667,
+      "expr": "開心"
+     }
+    ]
+   ],
+   [
+    "沒有標記的句子",
+    []
+   ],
+   [
+    "あい",
+    [
+     {
+      "at": 0.5,
+      "expr": "生氣"
+     }
+    ]
+   ],
+   [
+    "前中後",
+    [
+     {
+      "at": 0.333,
+      "expr": "難過"
+     },
+     {
+      "at": 0.667,
+      "expr": "得意"
+     },
+     {
+      "at": 1.0,
+      "expr": "睏"
+     }
+    ]
+   ],
+   [
+    "",
+    []
+   ]
+  ],
+  "expressions.tone_for": [
+   "neutral",
+   "happy",
+   "serious",
+   "intense",
+   "intense"
+  ],
+  "tts_chunker.split_for_tts": [
+   [],
+   [
+    "短い。"
+   ],
+   [
+    "今日はいい天気ですね。",
+    "散歩に行きましょう！",
+    "でも、雨が降るかもしれません。",
+    "3.14という数字、今日はいい天気ですね。",
+    "散歩に行きましょう！",
+    "でも、雨が降るかもしれません。",
+    "3.14という数字、今日はいい天気ですね。",
+    "散歩に行きましょう！",
+    "でも、雨が降るかもしれません。",
+    "3.14という数字、今日はいい天気ですね。",
+    "散歩に行きましょう！",
+    "でも、雨が降るかもしれません。",
+    "3.14という数字、"
+   ],
+   [
+    "A。B。C。D。E。F。"
+   ]
+  ],
+  "web_lookup.asked_to_search": [
+   false,
+   false,
+   false,
+   true,
+   true,
+   false,
+   false
+  ],
+  "web_lookup.clean_title": [
+   "原神",
+   "Genshin Impact",
+   "[Steam] 某遊戲",
+   "",
+   "A"
+  ],
+  "web_lookup.find_request": [
+   "原神",
+   "Ave Mujica",
+   null,
+   null,
+   "甲"
+  ],
+  "web_lookup.followup_prompt": [
+   "（你剛剛查了「原神」，查到的資料如下：\n某資料\n根據這些資料，用你平常的口吻回答主人剛才的問題，挑重點講、不要照念；資料沒提到的就說不確定，不要再查一次。）",
+   "（你剛剛查了「原神」，但什麼都沒查到。老實跟主人說你查不到、不確定，不要亂編，也不要再查一次。）"
+  ],
+  "web_lookup.query_prompt": "（主人剛才說：「這款遊戲是什麼？」。如果這需要上網查、而且是查得到的知識——作品、遊戲、人物、事件、名詞——只回〔查：要查的關鍵字〕，關鍵字用作品或人物的正式名稱；如果是私事、你的記憶、感受這種查不到的，只回〔不用查〕。）",
+  "web_lookup.sounds_unsure": [
+   true,
+   false,
+   true,
+   false,
+   false,
+   false,
+   true
+  ],
+  "web_lookup.strip_requests": [
+   "",
+   "あい",
+   "沒有請求",
+   "〔查：〕",
+   ""
+  ]
+ },
+ "saves_total": [
+  {
+   "avatar_width": 230
+  },
+  {
+   "game_mode": false
+  },
+  {
+   "screen_watch_enabled": false
+  },
+  {
+   "llm_provider": "local"
+  },
+  {
+   "stt_provider": "local"
+  },
+  {
+   "character_speech_language": "中文"
+  },
+  {
+   "chunked_tts": true
+  }
+ ],
+ "stt_screen_vars": {
+  "screen_watch.game_mode": false,
+  "stt.STT_PROVIDER": "local"
+ },
+ "surface": {
+  "CharacterWindow": [
+   "__class__",
+   "__delattr__",
+   "__dict__",
+   "__dir__",
+   "__doc__",
+   "__eq__",
+   "__format__",
+   "__ge__",
+   "__getattribute__",
+   "__getstate__",
+   "__gt__",
+   "__hash__",
+   "__init__",
+   "__init_subclass__",
+   "__le__",
+   "__lt__",
+   "__module__",
+   "__ne__",
+   "__new__",
+   "__reduce__",
+   "__reduce_ex__",
+   "__repr__",
+   "__setattr__",
+   "__sizeof__",
+   "__str__",
+   "__subclasshook__",
+   "__weakref__",
+   "_advance_wander",
+   "_append_history",
+   "_apply_avatar_resize",
+   "_claude_event_loop",
+   "_clear_status",
+   "_current_frame",
+   "_game_info_for",
+   "_handle_message",
+   "_hide_input_popup",
+   "_on_avatar_motion",
+   "_on_avatar_press",
+   "_on_avatar_release",
+   "_on_avatar_right_click",
+   "_on_avatar_scroll",
+   "_on_chunked_tts_toggle",
+   "_on_claude_event",
+   "_on_clear_memory",
+   "_on_close",
+   "_on_game_mode_toggle",
+   "_on_key_press",
+   "_on_key_release",
+   "_on_llm_provider_change",
+   "_on_popup_submit",
+   "_on_ptt_state_change",
+   "_on_ptt_transcribed",
+   "_on_screen_watch_toggle",
+   "_on_speech_language_preset_change",
+   "_on_stage_event",
+   "_on_stt_provider_change",
+   "_physics_tick",
+   "_poll_queue",
+   "_position_input_popup",
+   "_produce_audio",
+   "_prompt_screen_watch_choice",
+   "_prompt_speech_language",
+   "_queue_mouth_state",
+   "_screen_watch_loop",
+   "_set_dialogue",
+   "_show_input_popup",
+   "_start_wander",
+   "_submit",
+   "_toggle_history_window",
+   "_toggle_input_popup",
+   "_translate_and_show",
+   "_trigger_proactive",
+   "_update_dialogue_visibility"
+  ],
+  "chat": [
+   "BaseModel",
+   "CHARACTER_SPEECH_LANGUAGE",
+   "ConversationHistory",
+   "LLM_PROVIDER",
+   "Literal",
+   "MODEL",
+   "OLLAMA_NUM_CTX",
+   "OLLAMA_URL",
+   "OPENAI_API_KEY",
+   "OPENAI_CHAT_MODEL",
+   "OPENAI_CHAT_URL",
+   "OllamaNotRunningError",
+   "OpenAIRequestError",
+   "Optional",
+   "PERSONA_PATH",
+   "Path",
+   "SakikoReply",
+   "SakikoReplyJa",
+   "TONE_OPTIONS",
+   "ValidationError",
+   "_TONE_FIELD_INSTRUCTIONS",
+   "_TW_TERM_FIXES",
+   "__builtins__",
+   "__cached__",
+   "__doc__",
+   "__file__",
+   "__loader__",
+   "__name__",
+   "__package__",
+   "__spec__",
+   "_build_output_format_instructions",
+   "_build_speech_only_output_format_instructions",
+   "_build_zh_translate_system_prompt",
+   "_call_llm",
+   "_call_ollama",
+   "_call_openai",
+   "_fix_tw_terms",
+   "_load_persona_text",
+   "_reply_speech_field_instructions",
+   "chat",
+   "chat_ja",
+   "expressions",
+   "format_time_prefix",
+   "json",
+   "load_dotenv",
+   "os",
+   "sys",
+   "time",
+   "translate_zh",
+   "urllib",
+   "web_lookup"
+  ],
+  "desktop_pet": [
+   "ASSETS_DIR",
+   "AVATAR_DISPLAY_WIDTH",
+   "AVATAR_MAX_WIDTH",
+   "AVATAR_MIN_WIDTH",
+   "AVATAR_SCROLL_STEP",
+   "AvatarInteractionMixin",
+   "CABLE_DEVICE_NAME_HINT",
+   "CLAUDE_EVENT_MAX_TRIES",
+   "CLAUDE_EVENT_PORT",
+   "CLAUDE_EVENT_RETRY_MS",
+   "COLOR_ACCENT",
+   "COLOR_ACCENT_HOVER",
+   "COLOR_BG",
+   "COLOR_GOLD",
+   "COLOR_PANEL",
+   "COLOR_STATUS_TEXT",
+   "COLOR_TEXT",
+   "CharacterWindow",
+   "ClaudeEventMixin",
+   "ConversationFlowMixin",
+   "ConversationHistory",
+   "DRAG_THRESHOLD_PX",
+   "DialogueMixin",
+   "FALL_TERMINAL_VELOCITY_PX_S",
+   "GRAVITY_PX_S2",
+   "HistoryMixin",
+   "InputPopupMixin",
+   "MAGIC_TRANSPARENT_COLOR",
+   "MOUTH_HOP_MS",
+   "MOUTH_THRESHOLD_RATIO",
+   "Optional",
+   "PHYSICS_TICK_MS",
+   "PUSH_TO_TALK_KEY",
+   "PUSH_TO_TALK_KEY_LABEL",
+   "Path",
+   "PhysicsMixin",
+   "PushToTalkRecorder",
+   "SCREEN_WATCH_INTERVAL_SEC",
+   "SPEECH_LANGUAGE_PRESETS",
+   "ScreenWatchMixin",
+   "SettingsMixin",
+   "WANDER_MAX_DURATION_SEC",
+   "WANDER_MAX_INTERVAL_SEC",
+   "WANDER_MIN_DURATION_SEC",
+   "WANDER_MIN_INTERVAL_SEC",
+   "WANDER_SPEED_PX_S",
+   "_AVATAR_RESIZE_DEBOUNCE_MS",
+   "_CLAUDE_EVENT_PROMPTS",
+   "_GAME_INFO_HINT",
+   "_LOOKUP_SKIP_PROCESSES",
+   "_PET_PREFS_FILE",
+   "_SCREEN_WATCH_PROMPT_TEMPLATE",
+   "_SCREEN_WATCH_REPEAT_HINT",
+   "_SCREEN_WATCH_WINDOW_HINT",
+   "__builtins__",
+   "__cached__",
+   "__doc__",
+   "__file__",
+   "__loader__",
+   "__name__",
+   "__package__",
+   "__spec__",
+   "_find_cable_input_device",
+   "_load_prefs",
+   "_mouth_envelope",
+   "_play_on_device",
+   "_save_prefs",
+   "_screen_watch_prompt",
+   "chat",
+   "chat_ja",
+   "desktop_physics",
+   "exclude_self_from_screen_capture",
+   "expressions",
+   "generate",
+   "is_server_ready",
+   "json",
+   "livliv_link",
+   "load_avatar_frames",
+   "look_at_screen",
+   "main",
+   "np",
+   "os",
+   "pet_audio",
+   "play_for_avatar",
+   "pynput_keyboard",
+   "queue",
+   "random",
+   "screen_watch",
+   "sd",
+   "sf",
+   "socket",
+   "split_for_tts",
+   "start_server",
+   "stt",
+   "sys",
+   "threading",
+   "time",
+   "tk",
+   "translate_zh",
+   "web_lookup"
+  ],
+  "expressions": [
+   "EXPRESSIONS",
+   "TONE_FOR",
+   "_TAG",
+   "__builtins__",
+   "__cached__",
+   "__doc__",
+   "__file__",
+   "__loader__",
+   "__name__",
+   "__package__",
+   "__spec__",
+   "instructions",
+   "re",
+   "split_chunks",
+   "split_tags",
+   "tone_for"
+  ],
+  "web_lookup": [
+   "CACHE_FILE",
+   "LANGS",
+   "MAX_CHARS",
+   "Path",
+   "USER_AGENT",
+   "_ASKED",
+   "_REQUEST",
+   "_UNSURE",
+   "__builtins__",
+   "__cached__",
+   "__doc__",
+   "__file__",
+   "__loader__",
+   "__name__",
+   "__package__",
+   "__spec__",
+   "_get",
+   "_lock",
+   "_wikipedia",
+   "asked_to_search",
+   "clean_title",
+   "find_request",
+   "followup_prompt",
+   "instructions",
+   "json",
+   "query_prompt",
+   "re",
+   "search",
+   "sounds_unsure",
+   "strip_requests",
+   "threading",
+   "urllib"
+  ]
+ }
+}
