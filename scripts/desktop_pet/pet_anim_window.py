@@ -12,10 +12,12 @@ from PIL import ImageTk
 from pet_anim import AnimController
 from pet_anim_data import load_animations
 from pet_anim_frames import build_set, colorkey_rgb, needs_mirror
+from pet_anim_fx import IDENTITY, apply_fx, fx_for
 from pet_config import ASSETS_DIR
 import livliv_link
 
 ANIM_TICK_MS = 40  # 約 25fps 的檢查頻率，實際換幀依各組的 fps
+FX_CACHE_MAX = 400  # 變形後幀的快取上限（參數有量化，實際用到的組合不多）
 WALK_GRACE_SEC = 0.15  # 最近這麼久內有水平移動就算「正在走」
 
 
@@ -45,17 +47,29 @@ class AnimationMixin:
             self._anim_photos = {}
             self._anim_last = None
 
-    def _anim_photo(self, key: str, idx: int):
+    def _anim_frames(self, key: str):
+        """這組動畫正規化後的 PIL 幀（依目前寬度、面向快取）。"""
         cfg = self._anim_cfg
         aset = cfg.states.get(key) or cfg.reactions.get(key) or cfg.occasional[key]
         mirrored = needs_mirror(aset.native_facing, self._facing)
         ck = (self._avatar_width, key, mirrored)
-        photos = self._anim_photos.get(ck)
-        if photos is None:
+        frames = self._anim_photos.get(ck)
+        if frames is None:
             frames = build_set(aset, ASSETS_DIR, self._avatar_width, mirrored)
-            photos = [ImageTk.PhotoImage(colorkey_rgb(f)) for f in frames]
-            self._anim_photos[ck] = photos
-        return photos[idx]
+            self._anim_photos[ck] = frames
+        return ck, frames
+
+    def _anim_photo(self, key: str, idx: int, fx=IDENTITY):
+        """取得要顯示的 PhotoImage：幀 idx 套上變形 fx（見 pet_anim_fx）。"""
+        ck, frames = self._anim_frames(key)
+        pk = ("photo", *ck, idx, fx)
+        photo = self._anim_photos.get(pk)
+        if photo is None:
+            if len(self._anim_photos) > FX_CACHE_MAX:
+                self._anim_photos = {k: v for k, v in self._anim_photos.items() if k[0] != "photo"}
+            photo = ImageTk.PhotoImage(colorkey_rgb(apply_fx(frames[idx], fx)))
+            self._anim_photos[pk] = photo
+        return photo
 
     def _anim_tick(self) -> None:
         try:
@@ -71,9 +85,10 @@ class AnimationMixin:
                     self.avatar_label.configure(image=self._current_frame(is_open=False))
                     self._anim_last = None
             else:
-                state = (*result, self._facing, self._avatar_width)
+                fx = fx_for(result[0], self._anim_ctrl.elapsed(now))
+                state = (*result, fx, self._facing, self._avatar_width)
                 if state != self._anim_last:
-                    self.avatar_label.configure(image=self._anim_photo(*result))
+                    self.avatar_label.configure(image=self._anim_photo(*result, fx))
                     self._anim_last = state
         except Exception as exc:  # 動畫壞了就整個停用，退回靜態立繪
             print(f"[anim] 動畫停用：{exc!r}")

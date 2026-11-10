@@ -122,6 +122,10 @@ class AnimController:
 
         return self.key, self.frame_index(now)
 
+    def elapsed(self, now: float) -> float:
+        """進入目前狀態後經過的秒數（給 pet_anim_fx 算身體動作用）。"""
+        return 0.0 if self._start is None else now - self._start
+
     def frame_index(self, now: float) -> int:
         aset = self._set_for(self.key)
         idx = int((now - self._start) * aset.fps)
