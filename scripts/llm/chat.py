@@ -62,6 +62,9 @@ from conversation import ConversationHistory, format_time_prefix  # noqa: E402
 import expressions  # noqa: E402  表情標記的詞表（說明給模型看）
 import web_lookup  # noqa: E402  〔查：…〕上網查的說明
 
+if __name__ == "__main__":  # 命令列直接執行時，讓拆出去的模組 import chat 拿到的是這個模組本身
+    sys.modules.setdefault("chat", sys.modules[__name__])
+
 load_dotenv()
 
 
@@ -95,17 +98,6 @@ OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 # 對應的參考音檔，否則 TTS 端會找不到參考音檔可用。
 TONE_OPTIONS = ["neutral", "happy", "serious", "hesitant", "intense"]
 
-# 語氣欄位的說明。serious 的參考音檔是五個裡最低沉的（約 243 Hz），
-# 原本只寫「依情緒基調選」時，高傲的角色加上一直吐槽螢幕，模型有一半以上的句子都選 serious，
-# 聽起來整天都很陰沉（2026-11-08 量過最近 20 句，12 句在 240～250 Hz）。
-# 所以把 serious 限定在真的生氣、訓人的時候，其他拿不準的一律 neutral。
-_TONE_FIELD_INSTRUCTIONS = (
-    "這句話要用哪種語氣唸，從這幾個選一個：neutral（平常講話，拿不準就選這個）／"
-    "happy（開心、溫柔）／serious（只有真的生氣、板起臉訓人、嚴厲警告時才用；"
-    "高傲、吐槽、嘴硬、冷淡、一般的認真說明都不算，那些用 neutral）／"
-    "hesitant（猶豫、低落、難過）／intense（情緒激動、爆發）"
-)
-
 # 角色人設放在 characters/<角色>/persona.md，要改台詞風格/個性設定，
 # 直接編輯那個檔案就好，不用碰這支程式碼。
 #
@@ -114,111 +106,32 @@ PERSONA_PATH = Path(__file__).resolve().parents[2] / "characters" / "sakiko" / "
 
 
 # ============================================================
-# 提示詞（prompt）組裝
+# 拆出去的模組（名稱照舊可以從 chat 取得）
 # ============================================================
 #
-# 注意：下面這幾份提示詞刻意寫成「函式」，而不是預先組好、存成模組層級
-# 常數的字串。原因是 CHARACTER_SPEECH_LANGUAGE 有可能在程式執行期間
-# 被改掉（例如桌寵的右鍵選單提供切換語言的功能），如果寫成函式、
-# 每次呼叫時才現場組字串，下一次呼叫就會自動套用新的語言設定，
-# 不需要重新啟動程式。
-#
-# 反之，如果寫成模組載入當下就固定好的字串常數，之後即使改掉
-# CHARACTER_SPEECH_LANGUAGE 這個變數，也不會反映到提示詞裡——
-# 因為字串在模組載入的那一刻，就已經把舊的語言值內插、寫死進去了。
+# 提示詞組裝 -> chat_prompts.py，台灣用語校正 -> tw_terms.py，LLM 呼叫 -> chat_backend.py。
+# 設定值（上面那些大寫變數）的本尊還是在這個檔案：那幾個模組讀設定時，每次呼叫都來這裡拿，
+# 所以桌寵執行期改 chat.LLM_PROVIDER / chat.CHARACTER_SPEECH_LANGUAGE 照樣立刻生效。
 
-
-def _reply_speech_field_instructions() -> str:
-    """組出「reply_speech 這個欄位該怎麼寫」的提示詞片段。
-
-    背景：qwen2.5 用中文下指令時，即使提示詞已經明確要求輸出
-    {CHARACTER_SPEECH_LANGUAGE}，還是偶爾會有整個詞彙沒轉換、
-    直接冒出中文字詞，或是照抄使用者輸入裡剛好出現的英文單字的狀況
-    （這是模型訓練資料以中文為主的慣性，加上「偷懶照抄輸入」兩個
-    因素疊加造成的）。
-
-    只講「不要語言夾雜」這種籠統的要求並不夠，必須明確講「原文字母、
-    漢字一個都不行出現」，並且提醒模型自我檢查一遍。
-
-    這對 TTS（語音合成）來說不只是「聽起來好不好」的問題，而是實質
-    會出錯：GPT-SoVITS 的 text_lang="auto" 模式，只要偵測到一段
-    羅馬字母，就會切去用英文發音引擎去唸那一段，夾在其他語言的句子
-    中間會唸得亂七八糟。所以就算是使用者聊天時隨口用的英文單字，
-    也必須換成目標語言裡道地的外來語講法/發音寫法，不能照抄原文字母。
-    """
-    lang = CHARACTER_SPEECH_LANGUAGE
-    return (
-        f"用{lang}，以角色的口吻自然回覆——這是要餵給語音合成的，內容本身就要是完整、自然、"
-        f"適合唸出來的{lang}。這欄位絕對不能出現任何一個非{lang}的原文文字（中文字、英文"
-        f"字母都不行），即使使用者輸入裡剛好用了中文詞彙、英文單字/句子，也要換成{lang}裡"
-        f"道地的講法——如果是{lang}沒有的外來語詞彙，要轉換成{lang}的外來語發音寫法，不能"
-        f"照抄原文字母；寫完之後自己檢查一遍，確認整句都是{lang}才輸出"
-        + expressions.instructions()
-        + web_lookup.instructions()
-    )
-
-
-def _build_output_format_instructions() -> str:
-    """組出完整版（含中文翻譯欄位）的輸出格式提示詞。"""
-    return f"""
-使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、
-距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。
-你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
-{{
-  "reply_speech": "{_reply_speech_field_instructions()}",
-  "reply_zh": "reply_speech 的中文翻譯，給使用者看。一定要用「繁體中文」書寫，且用詞、語感要符合台灣的日常用語習慣（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙",
-  "tone": "{_TONE_FIELD_INSTRUCTIONS}"
-}}
-"""
-
-
-def _build_speech_only_output_format_instructions() -> str:
-    """組出精簡版（不含中文翻譯欄位）的輸出格式提示詞。
-
-    給 chat_ja() 使用——只需要 reply_speech + tone 就能開始跑 TTS，
-    不必等 LLM 連中文翻譯也一起生成完才回傳，藉此縮短第一段語音
-    開始播放前的等待時間。
-    """
-    return f"""
-使用者會用中文輸入。使用者訊息開頭的 [YYYY-MM-DD HH:MM] 是對方說話的時間，給你參考現在幾點、
-距離上一句話隔了多久，不要在回覆裡寫出這個時間標記。
-你要回傳一個 JSON，只回傳 JSON，不要有其他文字，格式如下：
-{{
-  "reply_speech": "{_reply_speech_field_instructions()}",
-  "tone": "{_TONE_FIELD_INSTRUCTIONS}"
-}}
-"""
-
-
-def _build_zh_translate_system_prompt() -> str:
-    """組出「把角色說的話翻譯成台灣用語繁體中文」的系統提示詞。
-
-    這份提示詞分成三段，各自的通用程度不同：
-    - 第一段（語言、用詞規範）：通用邏輯，換角色、換語言都適用，不用改。
-    - 第二段（貴族大小姐語尾的翻譯方式）：這是範例角色（豐川祥子）
-      專屬的說話習慣，換成自己的角色或語言時，這一段要換成符合
-      新角色設定的翻譯風格。
-    - 第三段（專有名詞的翻譯規則）：同樣是範例角色專屬的設定，
-      換角色時要一併更新成新角色相關的專有名詞清單。
-    """
-    return f"""你是專業的{CHARACTER_SPEECH_LANGUAGE}翻譯，把使用者提供的{CHARACTER_SPEECH_LANGUAGE}句子翻譯成繁體中文，且用詞、語感要符合台灣的日常用語習慣
-（例如：軟體不是软件、網路不是网络、隨身碟不是U盘、你好不是妳好），不要出現任何簡體字或中國大陸慣用詞彙。
-
-原文角色說話帶日文貴族大小姐語尾（ですわ／ますの），這種語氣中文沒有直接對應的文法，
-不要逐字翻譯語尾，改用中文裡對應的優雅語感表現，例如：句尾適度使用「呢」、「罷了」、
-「才是」，自稱/敬語可以用「您」，用詞偏文雅、不要口語化或俏皮的語助詞（不要用「啦」
-「唷」「喔」這種輕鬆語氣詞）。不要每句都硬加語尾湊字數，語氣自然優先。
-
-樂團名、代號、作品名這類專有名詞（例如 Ave Mujica、Oblivionis、CRYCHIC、MyGO!!!!!、
-Morfonica）維持原文羅馬字，不要音譯成中文字（不要寫成「阿維·穆吉卡」「奧布利比尼斯」
-這種音譯），人名一樣翻成對應的中文漢字（例如 豐川祥子、若葉睦）。
-
-只回傳翻譯後的中文句子，不要有其他文字、不要加引號。"""
-
-
-def _load_persona_text() -> str:
-    """讀取角色人設檔（persona.md）的完整內容。"""
-    return PERSONA_PATH.read_text(encoding="utf-8").strip()
+from chat_prompts import (  # noqa: E402,F401
+    _TONE_FIELD_INSTRUCTIONS,
+    _reply_speech_field_instructions,
+    _build_output_format_instructions,
+    _build_speech_only_output_format_instructions,
+    _build_zh_translate_system_prompt,
+    _load_persona_text,
+)
+from tw_terms import (  # noqa: E402,F401
+    _TW_TERM_FIXES,
+    _fix_tw_terms,
+)
+from chat_backend import (  # noqa: E402,F401
+    OllamaNotRunningError,
+    OpenAIRequestError,
+    _call_ollama,
+    _call_openai,
+    _call_llm,
+)
 
 
 # ============================================================
@@ -239,139 +152,6 @@ class SakikoReplyJa(BaseModel):
 
     reply_speech: str
     tone: Literal["neutral", "happy", "serious", "hesitant", "intense"]
-
-
-# ============================================================
-# 台灣用語事後校正（保險機制）
-# ============================================================
-#
-# qwen2.5 就算提示詞已經要求繁體中文／台灣用語，還是偶爾會漏掉幾個
-# 中國大陸慣用詞彙。這裡對最常見的幾個詞做「事後校正」當作最後一道
-# 保險，純粹是字串取代，只挑不會有歧義、不會誤傷正常詞句的詞彙。
-#
-# 注意：這份字典的 key（左邊）本身就是要被抓出來替換掉的簡體字／
-# 大陸用語，是「比對用的字面文字」，不是我們自己輸出的措辞，
-# 所以這裡刻意保留原樣，不能改成繁體——改了就抓不到要取代的目標了。
-_TW_TERM_FIXES = {
-    "软件": "軟體", "軟件": "軟體",
-    "网络": "網路", "網絡": "網路",
-    "视频": "影片", "視頻": "影片",
-    "信息": "訊息",
-    "硬盘": "硬碟", "硬碟盤": "硬碟",
-    "U盘": "隨身碟", "u盘": "隨身碟",
-    "打印": "列印",
-    "鼠标": "滑鼠",
-    "服务器": "伺服器", "服務器": "伺服器",
-    "程序": "程式",
-    "质量": "品質",
-    "短信": "簡訊",
-}
-
-
-def _fix_tw_terms(text: str) -> str:
-    """依 _TW_TERM_FIXES 逐條做字串取代，把混進來的大陸用語校正成台灣用語。"""
-    for wrong, right in _TW_TERM_FIXES.items():
-        text = text.replace(wrong, right)
-    return text
-
-
-# ============================================================
-# LLM 呼叫（依 provider 分流）
-# ============================================================
-
-
-class OllamaNotRunningError(RuntimeError):
-    """連不上本地 Ollama 服務時拋出。"""
-
-
-class OpenAIRequestError(RuntimeError):
-    """呼叫 OpenAI API 失敗時拋出（缺 key、HTTP 錯誤、網路錯誤都算）。"""
-
-
-def _call_ollama(messages: list[dict], *, json_format: bool, timeout: int = 120) -> str:
-    """打一次 Ollama chat API，回傳 content 原始字串（尚未 parse 成物件）。"""
-    payload = {
-        "model": MODEL,
-        "messages": messages,
-        "stream": False,
-        # gemma4 等新模型預設會先「思考」再回答，不關掉的話每句要多等 3～7 倍時間
-        # （2026-10-10 實測 gemma4:12b：關掉約 6 秒、沒關 15～46 秒）。
-        # 桌寵對話不需要推理，沒有思考功能的舊模型收到這個參數也會直接忽略。
-        "think": False,
-        "options": {"num_ctx": OLLAMA_NUM_CTX},
-    }
-    if json_format:
-        payload["format"] = "json"
-
-    req = urllib.request.Request(
-        OLLAMA_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read())
-    except urllib.error.URLError as e:
-        raise OllamaNotRunningError(
-            "連不上本地 Ollama 服務（http://localhost:11434）。"
-            "請確認 Ollama 已啟動（工作列有沒有 Ollama 圖示，或執行 `ollama serve`）。"
-        ) from e
-
-    return data["message"]["content"]
-
-
-def _call_openai(messages: list[dict], *, json_format: bool, timeout: int = 120) -> str:
-    """打一次 OpenAI Chat Completions API，回傳 content 原始字串（尚未 parse 成物件）。"""
-    if not OPENAI_API_KEY:
-        raise OpenAIRequestError(
-            "LLM_PROVIDER=openai 但沒有設定 OPENAI_API_KEY，"
-            "請在 .env 裡填入你自己的 OpenAI API key。"
-        )
-
-    payload: dict = {
-        "model": OPENAI_CHAT_MODEL,
-        "messages": messages,
-    }
-    if json_format:
-        payload["response_format"] = {"type": "json_object"}
-
-    req = urllib.request.Request(
-        OPENAI_CHAT_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-        },
-        method="POST",
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read())
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace")
-        raise OpenAIRequestError(f"OpenAI API 回傳錯誤（HTTP {e.code}）：{body}") from e
-    except urllib.error.URLError as e:
-        raise OpenAIRequestError(f"連不上 OpenAI API，檢查網路連線：{e}") from e
-
-    return data["choices"][0]["message"]["content"]
-
-
-def _call_llm(messages: list[dict], *, json_format: bool, timeout: int = 120) -> str:
-    """依 LLM_PROVIDER 分流打本地 Ollama 或 OpenAI。
-
-    兩邊的回傳格式在這一層已經對齊成同一種（純字串），呼叫端完全
-    不用管實際是打去哪個供應商。同時會印一行訊息到主控台，方便切換
-    provider 之後，直接用肉眼確認這次真的打去哪裡，不用另外寫測試腳本。
-    """
-    if LLM_PROVIDER == "openai":
-        print(f"[chat] 對話走雲端 OpenAI（{OPENAI_CHAT_MODEL}）")
-        return _call_openai(messages, json_format=json_format, timeout=timeout)
-
-    print(f"[chat] 對話走本地 Ollama（{MODEL}）")
-    return _call_ollama(messages, json_format=json_format, timeout=timeout)
 
 
 # ============================================================
