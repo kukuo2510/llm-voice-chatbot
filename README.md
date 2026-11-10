@@ -1,6 +1,6 @@
 # LLM Voice Chatbot
 
-一個**完全本地優先、也可選雲端**的角色語音聊天平台：LLM 生成台詞、GPT-SoVITS 生成語音，透過飄浮在桌面上的透明立繪視窗（「桌寵」）互動。內建範例角色（BanG Dream! Ave Mujica 的豐川祥子）僅供展示接線方式，平台本身設計成可換成任何角色。
+一個**完全本地優先、也可選雲端**的角色語音聊天平台：LLM 生成台詞、GPT-SoVITS 生成語音，透過飄浮在桌面上的透明立繪視窗（「桌寵」）互動。角色資料（人設、立繪、聲音設定）不包含在 repo 裡，平台設計成可換成任何角色。
 
 姊妹專案 [voice-dataset-toolkit](https://github.com/kukuo2510/voice-dataset-toolkit) 負責從你自己的素材訓練新角色的聲音。
 
@@ -20,7 +20,7 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 - 選用的 LivLiv 舞台：用 Electron 透明視窗畫會動、會對嘴的角色，取代兩張 PNG 的立繪（見 [`../livliv-stage/README.md`](../livliv-stage/README.md)）
 - 表情：封閉詞表 11 個（開心、害羞、生氣…，`scripts/llm/expressions.py`），模型把〔害羞〕這種標記插在台詞裡，唸之前拿掉，舞台照標記在句子裡的位置換表情，語音語氣也跟著換
 - 上網查（`scripts/llm/web_lookup.py`，維基百科公開 API，免費、不用金鑰）：開新遊戲／程式時自動在背景查；她說不確定、或你說「查一下」時查完再回答。只送出關鍵字
-- 範例角色的人設是「以祥子為原型、住在你電腦裡的 AI」：官方劇情是她的過去，知道自己會看螢幕、記性有限，也有現實世界的知識
+- 人設範例：角色是「住在你電腦裡的 AI」，知道自己會看螢幕、記性有限，也有現實世界的知識
 
 - Type or hold a hotkey to talk; the character replies with voice + a text translation + a tone tag (happy/serious/hesitant...), and TTS switches its delivery to match
 - Character speech language is configurable (the desktop pet's right-click "Character Speech Language" submenu switches it instantly — common languages are one click away, anything else via "Custom..."; or set a starting value with `.env`'s `CHARACTER_SPEECH_LANGUAGE`), defaults to Japanese, no code changes needed when swapping characters
@@ -31,7 +31,7 @@ A **local-first, cloud-optional** character voice chatbot: an LLM writes in-char
 - Optional LivLiv stage: an Electron transparent window that draws an animated, lip-syncing character instead of two PNG frames (see [`../livliv-stage/README.md`](../livliv-stage/README.md))
 - Expressions: a closed vocabulary of 11 (happy, shy, angry…, `scripts/llm/expressions.py`). The model inserts tags such as 〔害羞〕 into its lines; they are stripped before speaking and the stage switches expression at the tag's position in the sentence, with the voice tone following
 - Web lookup (`scripts/llm/web_lookup.py`, Wikipedia's public API, free, no key): looks up a newly opened game/app in the background, and looks things up before answering when the character sounds unsure or you say "look it up". Only the keyword is sent
-- The sample character's persona is "an AI modelled on Sakiko, living on your computer": canon events are her past, she knows she watches your screen and has limited memory, and she has real-world knowledge
+- Persona example: the character is "an AI living on your computer" — she knows she watches your screen, has limited memory, and has real-world knowledge
 
 ---
 
@@ -94,11 +94,11 @@ copy .env.example .env   # 填入需要的 token/key，細節見檔案內註解
 
 搬到另一台 Windows 電腦：雙擊 `scripts/new_pc/pack.bat`，會把程式、聲音模型、舞台、設定和 Python 套件的確切版本打包到 `D:\desktop_pet_package`；整個資料夾複製到新電腦，雙擊裡面的 `install.bat`，自動裝好 Miniconda、Python 環境、Node.js、Ollama 和模型，並在桌面建立捷徑。
 
-換成自己的角色：複製 `characters/sakiko/` → `characters/<角色>/`，換掉 `persona.md`、`voice_config.py`、`avatar/` 內容，語氣參考音檔要自己準備好（`voice-dataset-toolkit` 訓練/匯出的產物，或自己錄的），再把 `tts_infer.py`/`chat.py`/`desktop_pet.py` 裡寫死 `sakiko` 的路徑換掉。角色講不同語言的話，記得改 `.env` 的 `CHARACTER_SPEECH_LANGUAGE`，並把 `voice_config.py` 的 `PRONUNCIATION_FIXES`（目前是日文專屬的讀音修正表）換成你自己語言需要的版本。
+換成自己的角色：在 `characters/<角色>/` 放入自己的 `persona.md`、`voice_config.py`、`avatar/`（repo 不附範例角色），語氣參考音檔要自己準備好（`voice-dataset-toolkit` 訓練/匯出的產物，或自己錄的），再把 `tts_infer.py`/`chat.py`/`desktop_pet.py` 裡寫死 `sakiko` 的路徑換掉。角色講不同語言的話，記得改 `.env` 的 `CHARACTER_SPEECH_LANGUAGE`，並把 `voice_config.py` 的 `PRONUNCIATION_FIXES`（目前是日文專屬的讀音修正表）換成你自己語言需要的版本。
 
 Double-click `start_desktop_pet_hidden.vbs` to launch: it starts the TTS server (reusing one that's already running), the LivLiv stage and the desktop pet in the background with no console windows, logging to `logs/tts.log` and `logs/pet.log`. Quitting the pet from its right-click menu also closes the stage and the TTS server it started; if something hangs, double-click `stop_desktop_pet_hidden.bat` to force everything closed. To use another stage character, set the `LIVLIV_MODEL` environment variable before launching (default `sakiko404`).
 
-To use your own character: copy `characters/sakiko/` to `characters/<your-character>/`, replace `persona.md`, `voice_config.py`, and the `avatar/` assets, and provide your own tone-reference audio clips (exported/trained via `voice-dataset-toolkit`, or recorded yourself). Then update the hardcoded `sakiko` paths in `tts_infer.py`/`chat.py`/`desktop_pet.py`. If your character speaks a different language, set `.env`'s `CHARACTER_SPEECH_LANGUAGE` accordingly, and replace `voice_config.py`'s `PRONUNCIATION_FIXES` (currently a Japanese-specific pronunciation-correction table) with whatever your language needs.
+To use your own character: create `characters/<your-character>/` with your own `persona.md`, `voice_config.py`, and `avatar/` assets (no sample character is included), and provide your own tone-reference audio clips (exported/trained via `voice-dataset-toolkit`, or recorded yourself). Then update the hardcoded `sakiko` paths in `tts_infer.py`/`chat.py`/`desktop_pet.py`. If your character speaks a different language, set `.env`'s `CHARACTER_SPEECH_LANGUAGE` accordingly, and replace `voice_config.py`'s `PRONUNCIATION_FIXES` (currently a Japanese-specific pronunciation-correction table) with whatever your language needs.
 
 ---
 
@@ -126,7 +126,7 @@ Digital_Life_Server and ZerolanLiveRobot (comparison points), and the MediaWiki 
 
 ## 版權與內容聲明 / Copyright & Content
 
-這個 repo 只包含**工具程式碼**，不含任何動畫/影片素材、字幕、訓練音檔（含 `characters/*/voice_refs/`）、微調好的模型權重、`.env` 裡的金鑰。使用這些工具處理的任何第三方著作權內容，版權歸原作者所有，使用者需自行負責取得合法授權；範例角色內容（`characters/sakiko/`）僅供展示接線方式，不代表官方授權內容。
+這個 repo 只包含**工具程式碼**，不含任何動畫/影片素材、字幕、訓練音檔（含 `characters/*/voice_refs/`）、微調好的模型權重、`.env` 裡的金鑰。使用這些工具處理的任何第三方著作權內容，版權歸原作者所有，使用者需自行負責取得合法授權；repo 不附任何角色內容。
 
 This repository ships **tooling only** — no anime footage, subtitles, training audio, fine-tuned model weights, or secrets. Any third-party copyrighted material you process with these tools remains the property of its original rights holders; you are responsible for using it lawfully.
 

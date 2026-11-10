@@ -41,3 +41,6 @@ scripts/llm/.chat_history.json
 
 logs/
 scripts/llm/.lookup_cache.json
+
+# 角色資料（人設、立繪、聲音設定）只放本機，不進 repo
+characters/*/
