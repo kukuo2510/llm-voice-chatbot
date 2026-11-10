@@ -198,6 +198,13 @@ def worker(mode):
         os.environ["OPENAI_API_KEY"] = "test-key"
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
+    if mode == "plain":
+        # 不管專案根目錄有沒有使用者真正的 .env，plain 模式一律當作沒有，
+        # 這樣在哪個資料夾跑結果都一樣（common.env 只要標成已載入就不會去讀檔）。
+        sys.path.insert(0, str(SCRIPTS))
+        import common.env as _env  # noqa: E402
+        _env._loaded = True
+
     sys.path.insert(0, str(SCRIPTS / "desktop_pet"))
     import desktop_pet  # noqa: E402  不能有副作用（不開 GUI、不啟動 TTS）
     import chat
@@ -820,6 +827,14 @@ def main():
         return
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
     now = json.loads(json.dumps(now, ensure_ascii=False, sort_keys=True))
+    skipped = []
+    if "skipped" in (now.get("constants_dotenv") or {}):
+        # 專案根目錄有使用者真正的 .env 時不會覆蓋它，這一段沒辦法測，略過不比。
+        golden.pop("constants_dotenv", None)
+        now.pop("constants_dotenv", None)
+        skipped.append("constants_dotenv（已有真的 .env，無法用測試用 .env 驗證）")
+    for s in skipped:
+        print("略過：", s)
     problems = compare(golden, now)
     if problems:
         print("FAIL：行為和重構前不一樣")
