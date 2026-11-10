@@ -190,6 +190,9 @@ from pet_screen import ScreenWatchMixin  # noqa: E402
 from pet_settings import SettingsMixin  # noqa: E402
 from pet_claude import ClaudeEventMixin  # noqa: E402
 from pet_flow import ConversationFlowMixin  # noqa: E402
+from pet_bubble_window import BubbleMixin  # noqa: E402
+from pet_bubble_input import BubbleInputMixin  # noqa: E402
+from pet_anim_window import AnimationMixin  # noqa: E402
 
 
 class CharacterWindow(
@@ -202,6 +205,9 @@ class CharacterWindow(
     SettingsMixin,
     ClaudeEventMixin,
     ConversationFlowMixin,
+    BubbleMixin,
+    BubbleInputMixin,
+    AnimationMixin,
 ):
     """桌寵主視窗：整合畫面顯示、互動事件、物理模擬、對話與語音生成流程。"""
 
@@ -441,6 +447,7 @@ class CharacterWindow(
         self._task_queue: "queue.Queue[tuple[str, object]]" = queue.Queue()
         self.root.after(50, self._poll_queue)
         self.root.after(PHYSICS_TICK_MS, self._physics_tick)
+        self._setup_animation()  # 角色有 animations.json 才會啟動，否則什麼都不做
 
         if livliv_link.ENABLED:
             self._physics_enabled_var.set(False)  # 舞台視窗目前沒有重力，看不見的視窗也不用掉

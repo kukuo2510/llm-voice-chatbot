@@ -5,6 +5,8 @@ commit 都算一版。日期為 GitHub 發布日期。
 
 ## [未發布] - 2026-11-08
 
+- 桌寵（classic 模式）：對話改成頭頂的漫畫氣泡（獨立去背視窗、跟著角色移動／縮放、限制在螢幕工作區內，上方放不下改放旁邊），輸入列也改成頭頂氣泡樣式；頭頂位置由立繪非透明外框算出，舞台模式不變
+- 桌寵立繪幀動畫：角色資料夾可選放 `avatar/animations.json`（idle／walk／偶發小動作），幀會依可見身高與腳底基準線正規化；沒有這個檔就跟以前一模一樣
 - 啟動方式整併成 `start_desktop_pet_hidden.vbs`（背景啟動、無黑視窗、輸出寫進 `logs/`、結束桌寵時連舞台和 TTS 一起關）＋ `stop_desktop_pet_hidden.bat`（強制關閉）
 - 移除用不到的入口：`start_desktop_pet.bat`、`start_desktop_pet_livliv.bat`、`start_desktop_pet_reactive.bat`＋互動反應型原型 `desktop_pet_reactive.py`、`start_tts_inference.bat`、終端機 demo `talk_to_sakiko.bat`＋`chat_cli.py`
 - 螢幕讀取省資源：截圖縮到長邊 1280、vision context 4096（顯示記憶體 5.4 → 2.0 GB）、描述改短、換視窗或隔一段時間才真的看圖，其他時候沿用上次描述；新增右鍵「遊戲模式（少看螢幕）」，同一視窗改成 2 分鐘才重看
