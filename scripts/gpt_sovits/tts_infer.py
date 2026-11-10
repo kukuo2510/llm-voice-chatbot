@@ -112,13 +112,15 @@ def _cleanup_old_outputs():
         old_file.unlink()
 
 
-def generate(text: str, output_path: str | None = None, tone: str = DEFAULT_TONE) -> Path:
+def generate(text: str, output_path: str | None = None, tone: str = DEFAULT_TONE,
+             text_lang: str = "auto") -> Path:
     """生成語音並存檔，回傳實際存檔路徑。
 
     不指定 output_path 時，會自動存到 outputs/<speaker>/ 底下，
     並且在存檔完成後自動清理超過 MAX_KEEP_FILES 筆數的舊檔案。
+    text_lang 預設 auto；桌寵會依「角色說話語言」明確指定（見 speech_lang.py）。
     """
-    audio_bytes = synthesize(text, tone=tone)
+    audio_bytes = synthesize(text, tone=tone, text_lang=text_lang)
 
     if output_path:
         out = Path(output_path)

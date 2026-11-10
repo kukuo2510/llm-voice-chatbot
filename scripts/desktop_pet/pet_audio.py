@@ -15,6 +15,8 @@ import soundfile as sf
 
 from pet_config import CABLE_DEVICE_NAME_HINT, MOUTH_HOP_MS, MOUTH_THRESHOLD_RATIO
 from tts_infer import generate
+from speech_lang import text_lang_for
+import chat
 import livliv_link
 from pet_denoise import denoise
 
@@ -140,9 +142,12 @@ def _produce_audio(chunks: list, tones: list, audio_queue: "queue.Queue[tuple]")
     佇列裡的訊息：("audio", (data, samplerate))、("error", 例外)、("end", None)。
     某一段合成失敗就停止，後面的段落不再合成。
     """
+    # 依「角色說話語言」明確指定合成語言，不讓 GPT-SoVITS 自動猜（見 speech_lang.py）。
+    # 每次開始講話時才讀，右鍵切換語言後下一句就會套用。
+    text_lang = text_lang_for(chat.CHARACTER_SPEECH_LANGUAGE)
     for chunk, tone in zip(chunks, tones):
         try:
-            path = generate(chunk, None, tone)
+            path = generate(chunk, None, tone, text_lang=text_lang)
             data, samplerate = sf.read(str(path), dtype="float32")
             # 播放前先降噪（見 pet_denoise.py）；嘴型和舞台對嘴也用降噪後的音訊
             data = denoise(data, samplerate)
