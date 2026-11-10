@@ -35,6 +35,14 @@ COLOR_ACCENT_HOVER = "#5e3690"
 COLOR_GOLD = "#c9a86a"
 COLOR_TEXT = "#eee6f5"
 
+# 頭頂漫畫氣泡與氣泡輸入列：白底黑字（2026-11-10 使用者要求，比紫底好讀）。
+BUBBLE_FILL = "#ffffff"
+BUBBLE_BORDER = "#333333"
+BUBBLE_TEXT = "#111111"
+BUBBLE_STATUS_FILL = "#f2f2f2"
+BUBBLE_STATUS_BORDER = "#999999"
+BUBBLE_STATUS_TEXT = "#666666"
+
 # 狀態文字（錄音中／生成中）用比正式台詞暗一點的顏色，讓使用者一眼就能
 # 分辨目前看到的是「角色真的在講話」還是「系統狀態提示」。
 COLOR_STATUS_TEXT = "#b8a8c8"

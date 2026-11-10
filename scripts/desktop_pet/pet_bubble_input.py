@@ -10,7 +10,7 @@ from PIL import ImageTk
 from pet_bubble import BUBBLE_PAD_X, BUBBLE_TAIL_H, place_bubble
 from pet_bubble_window import mark_failed
 from pet_bubble_render import render_input_frame
-from pet_config import COLOR_PANEL, COLOR_TEXT
+from pet_config import BUBBLE_FILL, BUBBLE_TEXT
 from pet_shell import MAGIC_TRANSPARENT_COLOR
 
 INPUT_W = 330
@@ -44,9 +44,9 @@ class BubbleInputMixin:
         entry = tk.Entry(
             popup,
             font=("Microsoft JhengHei", 13),
-            bg=COLOR_PANEL,
-            fg=COLOR_TEXT,
-            insertbackground=COLOR_TEXT,
+            bg=BUBBLE_FILL,
+            fg=BUBBLE_TEXT,
+            insertbackground=BUBBLE_TEXT,
             relief="flat",
         )
         entry.place(x=BUBBLE_PAD_X, y=8, width=INPUT_W - 2 * BUBBLE_PAD_X, height=INPUT_BODY_H - 16)

@@ -18,7 +18,8 @@ from pet_bubble import (
     bubble_size,
     wrap_text,
 )
-from pet_config import COLOR_ACCENT, COLOR_BG, COLOR_PANEL, COLOR_STATUS_TEXT, COLOR_TEXT
+from pet_config import (BUBBLE_BORDER, BUBBLE_FILL, BUBBLE_STATUS_BORDER, BUBBLE_STATUS_FILL,
+                        BUBBLE_STATUS_TEXT, BUBBLE_TEXT)
 from pet_shell import MAGIC_TRANSPARENT_COLOR
 
 FONT_PX = 16
@@ -27,8 +28,8 @@ _SS = 4  # 超取樣倍率
 _FONT_CANDIDATES = ("msjh.ttc", "msjh.ttf", "NotoSansCJK-Regular.ttc", "arial.ttf")
 
 # 一般台詞：面板色底＋紫色邊；狀態文字：更暗的底與邊、文字用較暗的顏色。
-_STYLE_NORMAL = {"fill": COLOR_PANEL, "border": COLOR_ACCENT, "text": COLOR_TEXT}
-_STYLE_STATUS = {"fill": COLOR_BG, "border": "#4a3a63", "text": COLOR_STATUS_TEXT}
+_STYLE_NORMAL = {"fill": BUBBLE_FILL, "border": BUBBLE_BORDER, "text": BUBBLE_TEXT}
+_STYLE_STATUS = {"fill": BUBBLE_STATUS_FILL, "border": BUBBLE_STATUS_BORDER, "text": BUBBLE_STATUS_TEXT}
 
 
 @lru_cache(maxsize=1)
