@@ -21,3 +21,4 @@ psutil==6.1.1
 
 # --- 語音輸入 STT（desktop_pet/stt.py，SenseVoice）---
 funasr==1.3.22
+noisereduce==3.0.3

@@ -16,6 +16,7 @@ import soundfile as sf
 from pet_config import CABLE_DEVICE_NAME_HINT, MOUTH_HOP_MS, MOUTH_THRESHOLD_RATIO
 from tts_infer import generate
 import livliv_link
+from pet_denoise import denoise
 
 
 def _mouth_envelope(data: np.ndarray, samplerate: int, hop_ms: int = MOUTH_HOP_MS) -> list:
@@ -143,6 +144,8 @@ def _produce_audio(chunks: list, tones: list, audio_queue: "queue.Queue[tuple]")
         try:
             path = generate(chunk, None, tone)
             data, samplerate = sf.read(str(path), dtype="float32")
+            # 播放前先降噪（見 pet_denoise.py）；嘴型和舞台對嘴也用降噪後的音訊
+            data = denoise(data, samplerate)
         except Exception as e:
             audio_queue.put(("error", e))
             return

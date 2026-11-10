@@ -208,6 +208,8 @@ def worker(mode):
     sys.path.insert(0, str(SCRIPTS / "desktop_pet"))
     import desktop_pet  # noqa: E402  不能有副作用（不開 GUI、不啟動 TTS）
     import chat
+    # 角色人設只放本機、不進 repo；測試改讀通用的測試人設，快照裡才不會出現真正的人設內容。
+    chat.PERSONA_PATH = ROOT / "tests" / "fixtures" / "persona_test.md"
     import stt
     import screen_watch
     import expressions
