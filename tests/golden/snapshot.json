@@ -45,7 +45,7 @@
    "WANDER_MAX_INTERVAL_SEC": "15.0",
    "WANDER_MIN_DURATION_SEC": "1.0",
    "WANDER_MIN_INTERVAL_SEC": "5.0",
-   "WANDER_SPEED_PX_S": "110.0",
+   "WANDER_SPEED_PX_S": "70.0",
    "_AVATAR_RESIZE_DEBOUNCE_MS": "60",
    "_CLAUDE_EVENT_PROMPTS": "{'waiting': '（主人請來幫忙寫程式的 AI 助手 Claude 停下來了，在等主人按確認才能繼續，主人可能沒注意到。用你平常的口吻提醒主人一句，要短，像是順口提醒，不要提到「通知」這類字眼。）', 'done': '（主人請來幫忙寫程式的 AI 助手 Claude 剛把交辦的工作做完了，前後花了大約 {minutes} 分鐘。用你平常的口吻跟主人說一聲，可以順便誇一下或吐槽一下，要短。）'}",
    "_GAME_INFO_HINT": "'（關於這個遊戲／作品，網路上查到的資料（可以參考，但用聊天的口吻講，不要照念）：{info}）'",
@@ -295,7 +295,7 @@
     "Label#1.configure(image=frame_closed2)",
     "root.winfo_screenwidth()",
     "root.winfo_screenwidth()",
-    "return [None, None, 96.37, 96.37]"
+    "return [None, None, 97.69, 97.69]"
    ],
    "stdout": ""
   },
@@ -570,7 +570,7 @@
   "wander_due": {
    "log": [
     "root.winfo_screenwidth()",
-    "return [96.37, 0.9009999999999999, 'left']"
+    "return [97.69, 0.9009999999999999, 'left']"
    ],
    "stdout": ""
   }
@@ -1950,6 +1950,7 @@
  },
  "surface": {
   "CharacterWindow": [
+   "__annotations__",
    "__class__",
    "__delattr__",
    "__dict__",
@@ -1978,14 +1979,40 @@
    "__subclasshook__",
    "__weakref__",
    "_advance_wander",
+   "_anim_cfg",
+   "_anim_ctrl",
+   "_anim_last",
+   "_anim_on_resize",
+   "_anim_photo",
+   "_anim_photos",
+   "_anim_tick",
    "_append_history",
    "_apply_avatar_resize",
+   "_bind_avatar_events",
+   "_bubble_apply_dialogue",
+   "_bubble_destroy",
+   "_bubble_enabled",
+   "_bubble_hide",
+   "_bubble_is_status",
+   "_bubble_key",
+   "_bubble_label",
+   "_bubble_photo",
+   "_bubble_probe",
+   "_bubble_ready",
+   "_bubble_refresh",
+   "_bubble_shown",
+   "_bubble_size",
+   "_bubble_text",
+   "_bubble_win",
    "_claude_event_loop",
    "_clear_status",
    "_current_frame",
+   "_dialogue_is_status",
    "_game_info_for",
    "_handle_message",
+   "_head_and_rect",
    "_hide_input_popup",
+   "_make_overlay",
    "_on_avatar_motion",
    "_on_avatar_press",
    "_on_avatar_release",
@@ -2008,6 +2035,11 @@
    "_on_stt_provider_change",
    "_physics_tick",
    "_poll_queue",
+   "_popup_is_bubble",
+   "_popup_key",
+   "_popup_label",
+   "_popup_photo",
+   "_position_bubble_input",
    "_position_input_popup",
    "_produce_audio",
    "_prompt_screen_watch_choice",
@@ -2015,6 +2047,8 @@
    "_queue_mouth_state",
    "_screen_watch_loop",
    "_set_dialogue",
+   "_setup_animation",
+   "_show_bubble_input",
    "_show_input_popup",
    "_start_wander",
    "_submit",
@@ -2022,7 +2056,8 @@
    "_toggle_input_popup",
    "_translate_and_show",
    "_trigger_proactive",
-   "_update_dialogue_visibility"
+   "_update_dialogue_visibility",
+   "_walk_moved_at"
   ],
   "chat": [
    "BaseModel",
@@ -2083,7 +2118,10 @@
    "AVATAR_MAX_WIDTH",
    "AVATAR_MIN_WIDTH",
    "AVATAR_SCROLL_STEP",
+   "AnimationMixin",
    "AvatarInteractionMixin",
+   "BubbleInputMixin",
+   "BubbleMixin",
    "CABLE_DEVICE_NAME_HINT",
    "CLAUDE_EVENT_MAX_TRIES",
    "CLAUDE_EVENT_PORT",
