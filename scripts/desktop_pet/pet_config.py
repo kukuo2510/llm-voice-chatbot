@@ -121,7 +121,7 @@ FALL_TERMINAL_VELOCITY_PX_S = 1400.0
 
 # 落地後的自主漫遊：左右滑動現有靜態立繪（翻轉表示方向），不是真的走路
 # 動畫，同樣是純手感調出來的值。
-WANDER_SPEED_PX_S = 70.0  # 2026-11-10：配合 SakikoPet 走路幀（原作 55～85），110 會像腳在滑
+WANDER_SPEED_PX_S = 70.0  # 2026-11-10：配合逐格走路動畫的步伐（素材原設定 55～85），110 會像腳在滑
 WANDER_MIN_INTERVAL_SEC = 5.0  # 兩次漫遊之間至少等這麼久。
 WANDER_MAX_INTERVAL_SEC = 15.0
 WANDER_MIN_DURATION_SEC = 1.0  # 一次漫遊走多久。
