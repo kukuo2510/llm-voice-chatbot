@@ -50,7 +50,7 @@ class AnimationMixin:
     def _anim_frames(self, key: str):
         """這組動畫正規化後的 PIL 幀（依目前寬度、面向快取）。"""
         cfg = self._anim_cfg
-        aset = cfg.states.get(key) or cfg.reactions.get(key) or cfg.occasional[key]
+        aset = cfg.set_for(key)
         mirrored = needs_mirror(aset.native_facing, self._facing)
         ck = (self._avatar_width, key, mirrored)
         frames = self._anim_photos.get(ck)

@@ -6,10 +6,14 @@
 觸發式反應（config.reactions，選填）：dragging 演 drag、falling 演 fall（兩者持續到條件消失）；
 poke(now)／land(now) 啟動一次性動作，演到結束時間才回 idle。
 優先順序：talking > dragging > falling > 進行中的 poke/land > walking > 小動作/idle。
+多段式小動作（config.sequences）跟 occasional 共用挑選池；演的期間 key 是 "<名稱>#<段序>"，
+talking／dragging／falling／walking 都會取消它；點擊可喚醒（wake_click）；演的期間 resting 為真。
 注意：反應的 key 就是 "poke"/"drag"/"fall"/"land"，小動作不要取同樣的名字。
 """
 
 import random
+
+from pet_anim_seq import SequenceRun
 
 
 class AnimController:
@@ -22,6 +26,7 @@ class AnimController:
         self._next_occ = None
         self._poke_last = None  # 上一次被接受的戳的時間
         self._poke_level = -1
+        self._seq = None  # 進行中的 SequenceRun
 
     def _schedule_next(self, now: float) -> None:
         lo, hi = self.config.interval
@@ -33,8 +38,24 @@ class AnimController:
         self._end = None
 
     def _set_for(self, key: str):
-        return (self.config.states.get(key) or self.config.reactions.get(key)
-                or self.config.occasional[key])
+        return self.config.set_for(key)
+
+    @property
+    def resting(self) -> bool:
+        """正在演多段動作（物理不要讓它自己走開）。"""
+        return self._seq is not None
+
+    def _cancel_seq(self, now: float) -> None:
+        if self._seq is not None:
+            self._seq = None
+            self._leave_to_idle(now)
+
+    def wake_click(self, now: float) -> bool:
+        """點擊喚醒：在醒來那段之前才有效，回傳 True 代表吞掉這次點擊。"""
+        if self._seq is None or not self._seq.wake(now):
+            return False
+        self.key, self._start, self._end = self._seq.key, now, None
+        return True
 
     def _leave_to_idle(self, now: float) -> None:
         """結束反應／小動作回 idle，並重排下一次小動作（不要一結束馬上又演）。"""
@@ -66,8 +87,9 @@ class AnimController:
         self._end = now + len(aset.frames) / aset.fps
 
     def _pick_occasional(self) -> str:
-        names = list(self.config.occasional)
-        weights = [self.config.occasional[n].weight for n in names]
+        pool = {**self.config.occasional, **self.config.sequences}
+        names = list(pool)
+        weights = [pool[n].weight for n in names]
         return self.rng.choices(names, weights=weights, k=1)[0]
 
     def step(self, now: float, talking: bool, walking: bool, allow_occasional: bool = True,
@@ -78,12 +100,15 @@ class AnimController:
             self._schedule_next(now)
 
         if talking:
+            self._seq = None
             if self.key != "idle":
                 self._enter("idle", now)
             self._schedule_next(now)  # 講完話不要馬上跳小動作
             self._start = None  # 下次 step 重新開始 idle
             return None
 
+        if dragging or falling:
+            self._cancel_seq(now)
         reactions = self.config.reactions
         for flag, name in ((dragging, "drag"), (falling, "fall")):
             if flag and name in reactions:  # 持續型反應：條件在就一直演，優先於一切（除了說話）
@@ -96,6 +121,16 @@ class AnimController:
             if now < self._end:
                 return self.key, self.frame_index(now)
             self._leave_to_idle(now)
+
+        if self._seq is not None:
+            if walking:
+                self._cancel_seq(now)  # 回 idle，下面的走路判斷接手
+            elif self._seq.advance(now):
+                if self.key != self._seq.key:
+                    self.key, self._start = self._seq.key, self._seq.start
+                return self.key, self.frame_index(now)
+            else:
+                self._cancel_seq(now)  # 演完：回 idle 並重排
 
         in_occ = self.key in self.config.occasional
         if walking and "walk" in self.config.states:
@@ -110,9 +145,14 @@ class AnimController:
             if self.key == "walk":
                 self._enter("idle", now)
                 self._schedule_next(now)
-            if (self.key == "idle" and allow_occasional and self.config.occasional
+            if (self.key == "idle" and allow_occasional
+                    and (self.config.occasional or self.config.sequences)
                     and now >= self._next_occ):
                 name = self._pick_occasional()
+                if name in self.config.sequences:
+                    self._seq = SequenceRun(self.config.sequences[name], now, self.rng)
+                    self.key, self._start, self._end = self._seq.key, now, None
+                    return self.key, self.frame_index(now)
                 self._enter(name, now)
                 aset = self.config.occasional[name]
                 if aset.loop:

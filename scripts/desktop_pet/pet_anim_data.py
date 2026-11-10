@@ -9,6 +9,7 @@
       "occasional_interval_sec": [20, 60],      # 閒置時隨機演出小動作的間隔
       "states":   {"idle": SET, "walk": SET},   # idle 必填，walk 選填
       "occasional": {"drink-tea": SET, ...},    # 選填，閒置時隨機挑一個演
+      "sequences": {"penguin-nap": {...}},      # 選填，多段式小動作，格式見 pet_anim_seq
       "reactions": {"poke": SET, "drag": SET,   # 選填，被觸發才演；四個各自選填
                     "fall": SET, "land": SET}
     }
@@ -27,6 +28,8 @@
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from pet_anim_seq import parse_sequences
 
 DEFAULT_INTERVAL = (20.0, 60.0)
 DEFAULT_LOOP_DURATION = (4.0, 7.0)
@@ -58,6 +61,15 @@ class AnimConfig:
     poke_sequence: tuple = DEFAULT_POKE_SEQUENCE  # 連戳各級的演出秒數
     poke_reset_sec: float = DEFAULT_POKE_RESET_SEC
     poke_cooldown_sec: float = DEFAULT_POKE_COOLDOWN_SEC
+    sequences: dict = field(default_factory=dict)  # 多段式小動作（跟 occasional 共用挑選池）
+
+    def set_for(self, key: str):
+        """依 key 找對應的幀組；多段動作的 key 是 "<名稱>#<段序>"。找不到丟 KeyError。"""
+        found = self.states.get(key) or self.reactions.get(key) or self.occasional.get(key)
+        if found is not None:
+            return found
+        name, _, idx = key.rpartition("#")
+        return self.sequences[name].phases[int(idx)].aset
 
 
 def _pair(value, default) -> tuple:
@@ -193,5 +205,10 @@ def load_animations(avatar_dir: Path):
         states=states,
         occasional=occasional,
         reactions=reactions,
+        sequences=parse_sequences(
+            data.get("sequences"),
+            set(states) | set(occasional) | set(reactions) | set(raw_occ) | set(REACTION_NAMES),
+            lambda key, raw: _parse_set(key, raw, Path(avatar_dir)),
+        ),
         **poke,
     )

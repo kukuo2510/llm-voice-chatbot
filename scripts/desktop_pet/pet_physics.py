@@ -23,6 +23,11 @@ import desktop_physics
 LAND_MIN_FALL_SEC = 0.25  # 掉落至少這麼久，落地才算「摔到地上」（避免微小落差也觸發落地動作）
 
 
+def wander_paused(busy: bool, popup_open: bool, resting: bool) -> bool:
+    """漫遊要不要暫停：忙碌、輸入列開著、或正在演多段動作（睡覺中）。"""
+    return busy or popup_open or resting
+
+
 class PhysicsMixin:
     """桌寵物理：重力落地、自主漫遊、依面向挑立繪。"""
 
@@ -101,7 +106,8 @@ class PhysicsMixin:
         忙碌中（正在生成回覆）或輸入列開著的時候，會暫停倒數／移動，
         避免角色聊到一半突然自己走掉，體感很奇怪。
         """
-        if self._busy or self._input_popup is not None:
+        ctrl = getattr(self, "_anim_ctrl", None)
+        if wander_paused(self._busy, self._input_popup is not None, ctrl is not None and ctrl.resting):
             return x
 
         if self._walk_seconds_left > 0:

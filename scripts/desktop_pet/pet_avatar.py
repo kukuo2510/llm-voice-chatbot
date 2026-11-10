@@ -52,6 +52,8 @@ class AvatarInteractionMixin:
         self._fall_velocity = 0.0
 
         if not self._dragged:
+            if self._anim_ctrl is not None and self._try_wake():
+                return  # 多段動作（睡覺）被點醒：吞掉點擊
             if self._anim_ctrl is not None and self._try_poke(event.y):
                 return  # 點在臉上：戳一下，不開輸入列
             self._toggle_input_popup()

@@ -23,6 +23,17 @@ class ReactionMixin:
         except Exception as exc:  # 動畫小事不能拖垮物理迴圈
             print(f"[anim] 落地動作失敗：{exc!r}")
 
+    def _try_wake(self) -> bool:
+        """放開滑鼠時呼叫：多段動作（如睡覺）醒來那段之前被點到就喚醒並回傳 True（吞掉點擊）。"""
+        ctrl = getattr(self, "_anim_ctrl", None)
+        if ctrl is None or self._speaking:
+            return False
+        try:
+            return ctrl.wake_click(time.monotonic())
+        except Exception as exc:
+            print(f"[anim] 喚醒失敗，點擊照舊：{exc!r}")
+            return False
+
     def _try_poke(self, y: float) -> bool:
         """放開滑鼠時呼叫：點在臉部區且有 poke 反應就戳一下並回傳 True（呼叫端就不開輸入列）。
 
