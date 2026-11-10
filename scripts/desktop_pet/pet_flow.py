@@ -142,10 +142,15 @@ class ConversationFlowMixin:
             data, samplerate = payload
             livliv_link.send_expr_plan(plans[segment] if segment < len(plans) else [])
             segment += 1
+            # 只有真的在播語音時才算「說話中」：動畫暫停、交給嘴型換圖（見 pet_anim_window）。
+            # 想回覆、合成、翻譯的空檔動畫照常播，不會整段卡在靜態圖。
+            self._speaking = True
             try:
                 play_for_avatar(data, samplerate, on_mouth=self._queue_mouth_state)
             except Exception as e:
                 print(f"[desktop_pet] 播放失敗：{e}")
+            finally:
+                self._speaking = False
 
         # 等翻譯也結束才解除忙碌，避免下一輪對話開始後，上一輪的翻譯才姍姍來遲
         # 蓋掉新的對話框內容。
@@ -188,6 +193,7 @@ class ConversationFlowMixin:
                     self._set_dialogue(payload, is_status=True)
                 elif kind == "mouth":
                     self.avatar_label.configure(image=self._current_frame(is_open=payload))
+                    self._anim_last = None  # 嘴型蓋掉了動畫幀，動畫下一個 tick 要重畫
                 elif kind == "stage":
                     self._on_stage_event(payload)
 

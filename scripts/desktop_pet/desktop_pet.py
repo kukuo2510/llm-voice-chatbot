@@ -218,6 +218,7 @@ class CharacterWindow(
 
         # ---------- 基本狀態 ----------
         self._busy = False
+        self._speaking = False  # 只在播放語音時為 True（動畫據此暫停，見 pet_flow）
         self._dragged = False
         self._drag_origin = (0, 0)
         self._win_origin = (0, 0)

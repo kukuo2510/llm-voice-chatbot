@@ -16,7 +16,7 @@ class ReactionMixin:
     def _on_landed(self) -> None:
         """物理偵測到「掉落後落地」：播落地動作（說話中不播）。"""
         ctrl = getattr(self, "_anim_ctrl", None)
-        if ctrl is None or self._busy:
+        if ctrl is None or self._speaking:
             return
         try:
             ctrl.land(time.monotonic())
@@ -30,7 +30,7 @@ class ReactionMixin:
         點在臉上但在冷卻內時回傳 True（吞掉點擊，不開輸入列）。
         """
         ctrl = getattr(self, "_anim_ctrl", None)
-        if ctrl is None or "poke" not in ctrl.config.reactions or self._busy:
+        if ctrl is None or "poke" not in ctrl.config.reactions or self._speaking:
             return False
         try:
             top, bottom = face_zone(ASSETS_DIR, self._avatar_width)

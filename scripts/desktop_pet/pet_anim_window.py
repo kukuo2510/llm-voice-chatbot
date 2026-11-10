@@ -60,7 +60,7 @@ class AnimationMixin:
     def _anim_tick(self) -> None:
         try:
             now = time.monotonic()
-            talking = self._busy
+            talking = self._speaking  # 2026-11-10：原本用 _busy，想回覆／翻譯的整段都卡在靜態圖
             walking = now - self._walk_moved_at < WALK_GRACE_SEC
             result = self._anim_ctrl.step(
                 now, talking, walking, allow_occasional=self._input_popup is None,
