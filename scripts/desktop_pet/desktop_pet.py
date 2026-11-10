@@ -121,300 +121,64 @@ from pet_shell import (  # noqa: E402
 )
 
 
-# ============================================================
-# 視覺樣式
-# ============================================================
-#
-# Ave Mujica 氛圍配色（哥德紫＋金色點綴）——不是查證過的官方角色色票，
-# 是照劇中面具／薔薇／歌德風美術方向抓的氣氛色，想換成別的顏色跟維護者說就好。
 
-COLOR_BG = "#15101c"
-COLOR_PANEL = "#241a30"
-COLOR_ACCENT = "#7c4dbd"
-COLOR_ACCENT_HOVER = "#5e3690"
-COLOR_GOLD = "#c9a86a"
-COLOR_TEXT = "#eee6f5"
-
-# 狀態文字（錄音中／生成中）用比正式台詞暗一點的顏色，讓使用者一眼就能
-# 分辨目前看到的是「角色真的在講話」還是「系統狀態提示」。
-COLOR_STATUS_TEXT = "#b8a8c8"
-
-
-# ============================================================
-# 熱鍵 / 裝置設定
-# ============================================================
-
-# 全域熱鍵：按住講話、放開結束。
-PUSH_TO_TALK_KEY = pynput_keyboard.Key.f9
-PUSH_TO_TALK_KEY_LABEL = "F9"
-
-CABLE_DEVICE_NAME_HINT = "CABLE Input"
-
-
-# ============================================================
-# 立繪相關設定
-# ============================================================
-
-# 立繪素材放在 characters/<角色>/avatar/，跟角色人設、語音設定同一套規則；
-# 要換角色，把這裡的 "sakiko" 換成自己的角色資料夾名稱。
-ASSETS_DIR = Path(__file__).resolve().parents[2] / "characters" / "sakiko" / "avatar"
-
-# 立繪顯示寬度（像素）的預設值，高度依素材比例算出來。可以用滑鼠滾輪
-# 即時縮放（見 _on_avatar_scroll），縮放後的大小會被記住，下次啟動時
-# 優先於這個預設值使用。
-AVATAR_DISPLAY_WIDTH = int(os.environ.get("DESKTOP_PET_AVATAR_WIDTH", "280"))
-AVATAR_MIN_WIDTH = 120
-AVATAR_MAX_WIDTH = 600
-
-# 滾輪每格縮放的像素量。
-AVATAR_SCROLL_STEP = 20
-
-# 滾輪停下來這麼久（毫秒）才真的重繪，避免連續滾動時每一格都觸發一次
-# 重繪造成畫面卡頓。
-_AVATAR_RESIZE_DEBOUNCE_MS = 60
-
-# 角色說話語言的常見選項，給右鍵選單快速切換用；不在這份清單裡的語言，
-# 走選單裡的「自訂...」，並不是只能從這幾個裡面選。
-SPEECH_LANGUAGE_PRESETS = ["日文", "中文", "英文", "韓文"]
-
-# 音量驅動開合嘴的取樣間隔（毫秒）。這不是真的音素對齊，只是每隔這麼久
-# 取樣一次目前音量，決定嘴巴該開還該合。
-MOUTH_HOP_MS = 90
-
-# 這段音量要超過整句最大音量的這個比例，才會被判定為「張嘴」。
-MOUTH_THRESHOLD_RATIO = 0.3
-
-# 滑鼠按下去之後，移動距離要超過這個門檻（像素）才算是「拖曳」，
-# 沒超過的話就當成單純的「點擊」。
-DRAG_THRESHOLD_PX = 3
-
-
-# ============================================================
-# 桌寵物理設定（重力／落地，詳見 desktop_physics.py）
-# ============================================================
-#
-# 這些數值是純手感調出來的，不是物理正確的單位換算，想調快／調慢
-# 直接改這幾個數字就好。
-
-# 重力／落地判定的更新頻率，約 30fps。
-PHYSICS_TICK_MS = 33
-GRAVITY_PX_S2 = 2200.0
-FALL_TERMINAL_VELOCITY_PX_S = 1400.0
-
-# 落地後的自主漫遊：左右滑動現有靜態立繪（翻轉表示方向），不是真的走路
-# 動畫，同樣是純手感調出來的值。
-WANDER_SPEED_PX_S = 110.0
-WANDER_MIN_INTERVAL_SEC = 5.0  # 兩次漫遊之間至少等這麼久。
-WANDER_MAX_INTERVAL_SEC = 15.0
-WANDER_MIN_DURATION_SEC = 1.0  # 一次漫遊走多久。
-WANDER_MAX_DURATION_SEC = 3.0
-
-
-# ============================================================
-# 螢幕讀取主動搭話（規劃見 TTS通用平台_專案規劃.md 10.5）
-# ============================================================
-#
-# 這個功能的開關，刻意不是靠改 .env 這種要開檔案編輯的方式來決定
-# （試用門檻太高，等於變相勸退使用者），而是程式啟動時跳出詢問視窗、
-# 加上右鍵選單隨時可以切換——「要不要記住這次選擇」才是使用者真正
-# 要做的決定，而不是「要不要開這個功能」本身。
-#
-# 基於同一個理由，「對話／語音辨識要走本地還是雲端」也一併做成右鍵選單
-# 可以直接切換，不用進 .env 改。所有記住的偏好統一存進下面這個本機
-# 小檔案（_PET_PREFS_FILE）；不記住的話，下次開程式還是照 .env 的預設值。
-
-SCREEN_WATCH_INTERVAL_SEC = int(os.environ.get("SCREEN_WATCH_INTERVAL_SEC", "45"))  # 2026-11-08 使用者覺得 20 秒太密，改 45
-
-# Claude Code 的 hook（scripts/desktop_pet/claude_hook.py）透過這個 UDP 埠通知桌寵：
-# Claude 在等主人確認權限、或做完一件比較久的工作。只聽本機。
-CLAUDE_EVENT_PORT = int(os.environ.get("CLAUDE_EVENT_PORT", "9892"))
-CLAUDE_EVENT_RETRY_MS = 2000  # 角色正在講話時，隔多久再試一次
-CLAUDE_EVENT_MAX_TRIES = 30  # 最多等一分鐘，還在忙就放棄這次通知
-_CLAUDE_EVENT_PROMPTS = {
-    "waiting": (
-        "（主人請來幫忙寫程式的 AI 助手 Claude 停下來了，在等主人按確認才能繼續，主人可能沒注意到。"
-        "用你平常的口吻提醒主人一句，要短，像是順口提醒，不要提到「通知」這類字眼。）"
-    ),
-    "done": (
-        "（主人請來幫忙寫程式的 AI 助手 Claude 剛把交辦的工作做完了，前後花了大約 {minutes} 分鐘。"
-        "用你平常的口吻跟主人說一聲，可以順便誇一下或吐槽一下，要短。）"
-    ),
-}
-_PET_PREFS_FILE = Path(__file__).resolve().parent / ".pet_prefs.json"
-
-_SCREEN_WATCH_PROMPT_TEMPLATE = (
-    "（你不經意瞄了一眼主人的螢幕，看到的畫面大概是：{caption}。"
-    "用你平常的口吻主動跟主人講一句話，針對畫面裡具體的東西（例如提到的標題、"
-    "遊戲名稱、正在做的事）給出有內容的反應、關心或吐槽，不要生硬地複述看到的內容，"
-    "也不要提到「螢幕」「截圖」這類字眼——就自然地像是瞄了一眼隨口說一句話。"
-    "**絕對不要講「需要幫忙嗎」「有什麼可以幫你的」這種制式客套話**，沒有具體東西"
-    "好反應的話寧可換個角度吐槽或關心，也不要落入這種空話。）"
+# 常數、提示詞、偏好檔、播放／對嘴：搬到 pet_*.py，這裡重新 import，舊名稱仍然是這個模組的屬性。
+# pet_config 一定要最先 import：它會先載入 .env，後面幾個常數在 import 當下就讀環境變數。
+from pet_config import (  # noqa: E402,F401
+    COLOR_BG,
+    COLOR_PANEL,
+    COLOR_ACCENT,
+    COLOR_ACCENT_HOVER,
+    COLOR_GOLD,
+    COLOR_TEXT,
+    COLOR_STATUS_TEXT,
+    PUSH_TO_TALK_KEY,
+    PUSH_TO_TALK_KEY_LABEL,
+    CABLE_DEVICE_NAME_HINT,
+    ASSETS_DIR,
+    AVATAR_DISPLAY_WIDTH,
+    AVATAR_MIN_WIDTH,
+    AVATAR_MAX_WIDTH,
+    AVATAR_SCROLL_STEP,
+    _AVATAR_RESIZE_DEBOUNCE_MS,
+    SPEECH_LANGUAGE_PRESETS,
+    MOUTH_HOP_MS,
+    MOUTH_THRESHOLD_RATIO,
+    DRAG_THRESHOLD_PX,
+    PHYSICS_TICK_MS,
+    GRAVITY_PX_S2,
+    FALL_TERMINAL_VELOCITY_PX_S,
+    WANDER_SPEED_PX_S,
+    WANDER_MIN_INTERVAL_SEC,
+    WANDER_MAX_INTERVAL_SEC,
+    WANDER_MIN_DURATION_SEC,
+    WANDER_MAX_DURATION_SEC,
+    SCREEN_WATCH_INTERVAL_SEC,
+    CLAUDE_EVENT_PORT,
+    CLAUDE_EVENT_RETRY_MS,
+    CLAUDE_EVENT_MAX_TRIES,
 )
-# 前景視窗的標題和程式名稱，讓角色知道是哪款遊戲／哪個網站，用她知道的相關知識聊
-_SCREEN_WATCH_WINDOW_HINT = (
-    "（主人現在的視窗標題是「{title}」，程式是 {process}。如果認得出是哪款遊戲、哪部作品或哪個網站，"
-    "可以用你知道的相關知識聊——角色、玩法、劇情、梗都行，像是陪在旁邊看的人；不確定是什麼就別亂猜，直接問主人。）"
+from pet_prompts import (  # noqa: E402,F401
+    _CLAUDE_EVENT_PROMPTS,
+    _SCREEN_WATCH_PROMPT_TEMPLATE,
+    _SCREEN_WATCH_WINDOW_HINT,
+    _SCREEN_WATCH_REPEAT_HINT,
+    _LOOKUP_SKIP_PROCESSES,
+    _GAME_INFO_HINT,
+    _screen_watch_prompt,
 )
-# 畫面沒重看、沿用上次的描述時（遊戲模式最常見）：明講已經講過了，不然每 20 秒都會講同一句
-_SCREEN_WATCH_REPEAT_HINT = (
-    "（這是你剛才看過的同一個畫面，你已經針對它講過話了。這次**不要再講一樣的內容**，"
-    "換個角度：聊這款遊戲／這個東西本身、問主人進展、分享你的看法或感想，或閒聊別的；"
-    "句子開頭也不要跟你前幾句一樣。）"
+from pet_prefs import (  # noqa: E402,F401
+    _PET_PREFS_FILE,
+    _load_prefs,
+    _save_prefs,
 )
-
-
-# 自動查資料時跳過的一般程式：瀏覽器、編輯器、聊天軟體這類，標題一直變、也不是「一款遊戲／作品」
-_LOOKUP_SKIP_PROCESSES = {
-    "chrome.exe", "msedge.exe", "firefox.exe", "brave.exe", "opera.exe", "explorer.exe", "code.exe", "cursor.exe",
-    "windowsterminal.exe", "cmd.exe", "powershell.exe", "pwsh.exe", "notepad.exe", "notepad++.exe", "discord.exe",
-    "line.exe", "telegram.exe", "slack.exe", "teams.exe", "ms-teams.exe", "obsidian.exe", "winword.exe",
-    "excel.exe", "powerpnt.exe", "steam.exe", "steamwebhelper.exe", "spotify.exe", "claude.exe", "electron.exe",
-    "python.exe", "pythonw.exe", "taskmgr.exe", "applicationframehost.exe", "vlc.exe", "potplayermini64.exe",
-}
-_GAME_INFO_HINT = "（關於這個遊戲／作品，網路上查到的資料（可以參考，但用聊天的口吻講，不要照念）：{info}）"
-
-
-def _screen_watch_prompt(caption: str, look: dict, info: Optional[str] = None) -> str:
-    prompt = _SCREEN_WATCH_PROMPT_TEMPLATE.format(caption=caption)
-    if look.get("title") or look.get("process"):
-        prompt += _SCREEN_WATCH_WINDOW_HINT.format(title=look.get("title") or "（無）", process=look.get("process") or "未知")
-    if info:
-        prompt += _GAME_INFO_HINT.format(info=info)
-    if not look.get("fresh"):
-        prompt += _SCREEN_WATCH_REPEAT_HINT
-    return prompt
-
-
-def _load_prefs() -> dict:
-    """讀取記住的本機偏好（螢幕讀取開關、對話／STT 走本地或雲端）。
-
-    檔案不存在或內容壞掉時，回傳空字典——呼叫端看到某個 key 不存在時，
-    應該回退去用 .env 的預設值，而不是自己去瞎猜一個值。
-    """
-    if not _PET_PREFS_FILE.exists():
-        return {}
-    try:
-        return json.loads(_PET_PREFS_FILE.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
-def _save_prefs(**updates) -> None:
-    """把指定的偏好更新，合併寫回本機偏好檔案（保留其他既有的偏好值）。"""
-    prefs = _load_prefs()
-    prefs.update(updates)
-    _PET_PREFS_FILE.write_text(json.dumps(prefs, ensure_ascii=False), encoding="utf-8")
-
-
-def _mouth_envelope(data: np.ndarray, samplerate: int, hop_ms: int = MOUTH_HOP_MS) -> list:
-    """把音檔切成一段一段（每段 hop_ms 長），算出每段的音量，回傳每段
-    「嘴巴該不該張開」的 bool list。
-
-    這只是「音量夠大就張嘴」的陽春版本，不是真的音素對齊——真正的音素
-    對齊需要 TTS 額外吐出逐字時間戳，詳見規劃文件 10.4 的討論。
-    """
-    mono = data.mean(axis=1) if data.ndim > 1 else data
-    hop = max(1, int(samplerate * hop_ms / 1000))
-
-    levels = [
-        float(np.sqrt(np.mean(mono[i:i + hop] ** 2)))
-        for i in range(0, len(mono), hop)
-    ]
-
-    peak = max(levels) if levels else 0.0
-    if peak <= 1e-6:
-        return [False] * len(levels)
-
-    return [level > peak * MOUTH_THRESHOLD_RATIO for level in levels]
-
-
-def _find_cable_input_device() -> Optional[int]:
-    """找出虛擬音效卡（CABLE Input）的播放端裝置編號。
-
-    同名裝置在不同 host API（MME/DirectSound/WASAPI）之下，可能會重複
-    出現好幾筆。這裡優先挑選跟 sounddevice 目前預設 host API 一致的
-    那一筆，行為會比較穩定；如果都對不上，就退而求其次隨便挑第一筆。
-    """
-    devices = sd.query_devices()
-    default_hostapi = sd.default.hostapi
-
-    candidates = [
-        i
-        for i, d in enumerate(devices)
-        if CABLE_DEVICE_NAME_HINT in d["name"] and d["max_output_channels"] > 0
-    ]
-
-    for i in candidates:
-        if devices[i]["hostapi"] == default_hostapi:
-            return i
-
-    return candidates[0] if candidates else None
-
-
-def _play_on_device(data: np.ndarray, samplerate: int, device_index: int) -> None:
-    """把音訊資料播放到指定的裝置編號上。"""
-    channels = data.shape[1] if data.ndim > 1 else 1
-    with sd.OutputStream(device=device_index, samplerate=samplerate, channels=channels) as stream:
-        stream.write(data.astype(np.float32))
-
-
-def play_for_avatar(data: np.ndarray, samplerate: int, on_mouth=None) -> None:
-    """播放生成的語音：一份播給使用者聽，一份播給虛擬音效卡對嘴用。
-
-    播放目標最多兩個：系統目前的預設輸出裝置（給使用者聽），以及虛擬
-    音效卡的 CABLE Input（給 VTube Studio 對嘴用），兩份會同時播放。
-
-    如果有提供 on_mouth callback（簽名為 (is_open: bool) -> None），
-    會在另一條獨立的執行緒上，依照音量節奏呼叫它，讓桌寵視窗裡的立繪
-    跟著開合嘴——這條「嘴巴開合」的時鐘是跟播放本身各自獨立計算的，
-    兩邊都執行完畢後，這支函式才會返回。
-    """
-    targets: list[int] = []
-
-    default_output = sd.default.device[1]
-    if default_output is not None:
-        targets.append(default_output)
-
-    cable_index = _find_cable_input_device()
-    if cable_index is None:
-        print("[desktop_pet] 找不到 CABLE Input 裝置，只會播給你聽，VTube Studio 不會對嘴")
-    elif cable_index != default_output:
-        targets.append(cable_index)
-
-    threads = [
-        threading.Thread(target=_play_on_device, args=(data, samplerate, idx))
-        for idx in targets
-    ]
-
-    mouth_thread = None
-    if on_mouth is not None:
-        envelope = _mouth_envelope(data, samplerate)
-        hop_seconds = MOUTH_HOP_MS / 1000
-
-        def _run_mouth_clock():
-            # 用絕對時間點（而不是累加 sleep）計算每一段該在什麼時候觸發，
-            # 避免每段呼叫 on_mouth 本身的微小耗時累積誤差、讓嘴型節奏
-            # 隨著音訊長度越拖越慢。
-            start = time.monotonic()
-            for i, is_open in enumerate(envelope):
-                delay = start + i * hop_seconds - time.monotonic()
-                if delay > 0:
-                    time.sleep(delay)
-                on_mouth(is_open)
-            on_mouth(False)
-
-        mouth_thread = threading.Thread(target=_run_mouth_clock)
-
-    livliv_link.send_clip(data, samplerate)
-    for t in threads:
-        t.start()
-    if mouth_thread:
-        mouth_thread.start()
-
-    for t in threads:
-        t.join()
-    if mouth_thread:
-        mouth_thread.join()
+from pet_audio import (  # noqa: E402,F401
+    _mouth_envelope,
+    _find_cable_input_device,
+    _play_on_device,
+    play_for_avatar,
+)
+import pet_audio  # noqa: E402
 
 
 class CharacterWindow:
@@ -1496,26 +1260,8 @@ class CharacterWindow:
             reply_zh = f"（翻譯失敗：{e}）"
         self._task_queue.put(("reply", reply_zh))
 
-    @staticmethod
-    def _produce_audio(chunks: list, tones: list, audio_queue: "queue.Queue[tuple]") -> None:
-        """背景執行緒：一段一段合成語音，合成好的音訊資料依序丟進 audio_queue。
-
-        放進佇列的是「已經讀進記憶體的音訊資料」而不是檔案路徑——
-        tts_infer 只會保留最新幾個輸出檔，段落一多，還沒播到的檔案
-        有可能先被清掉，先讀進記憶體就沒有這個問題。
-
-        佇列裡的訊息：("audio", (data, samplerate))、("error", 例外)、("end", None)。
-        某一段合成失敗就停止，後面的段落不再合成。
-        """
-        for chunk, tone in zip(chunks, tones):
-            try:
-                path = generate(chunk, None, tone)
-                data, samplerate = sf.read(str(path), dtype="float32")
-            except Exception as e:
-                audio_queue.put(("error", e))
-                return
-            audio_queue.put(("audio", (data, samplerate)))
-        audio_queue.put(("end", None))
+    # 實作搬到 pet_audio.py；這裡留同名的 staticmethod，讓 self._produce_audio 照舊能用。
+    _produce_audio = staticmethod(pet_audio._produce_audio)
 
     def _queue_mouth_state(self, is_open: bool) -> None:
         """播放執行緒呼叫：把嘴巴開合狀態送進佇列，交給主執行緒更新畫面。"""
