@@ -39,9 +39,11 @@ def normalize_set(images, target_h: int, canvas_size: tuple, center_x: float, ba
     ub = union_bbox(images)
     src_h = max(1, ub[3] - ub[1])
     scale = target_h / src_h
+    # 太寬（例如帶道具）就整組縮到放得進畫布，不要被切掉
+    scale = min(scale, canvas_size[0] / max(1, ub[2] - ub[0]))
     out_w = max(1, round((ub[2] - ub[0]) * scale))
-    out_h = max(1, round(target_h))
-    left = round(center_x - out_w / 2)
+    out_h = max(1, round(src_h * scale))
+    left = min(max(0, round(center_x - out_w / 2)), max(0, canvas_size[0] - out_w))  # 不超出左右邊
     top = round(baseline_y) - out_h
     frames = []
     for im in images:
@@ -77,7 +79,8 @@ def target_geometry(assets_dir, display_w: int) -> tuple:
 def build_set(anim_set, assets_dir, display_w: int, mirrored: bool) -> list:
     """載入並正規化一組動畫（RGBA，尚未去背）。"""
     canvas, height, cx, base = target_geometry(assets_dir, display_w)
-    frames = normalize_set([load_frame(p) for p in anim_set.frames], round(height), canvas, cx, base)
+    ratio = getattr(anim_set, "height_ratio", 1.0)
+    frames = normalize_set([load_frame(p) for p in anim_set.frames], round(height * ratio), canvas, cx, base)
     return mirror_all(frames) if mirrored else frames
 
 

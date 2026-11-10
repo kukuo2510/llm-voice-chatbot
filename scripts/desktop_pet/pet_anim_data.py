@@ -16,7 +16,8 @@
     SET = {"frames": [...], "fps": 8, "loop": true,
            "native_facing": "front" | "left" | "right",   # 圖本身面向；front 永不翻轉
            "duration_sec": [4.5, 7.5],           # 只有 loop 的小動作用：演多久
-           "weight": 1}                          # 小動作被挑中的權重
+           "weight": 1,                          # 小動作被挑中的權重
+           "height_ratio": 1.0}                  # 選填：顯示高度比例（坐著、跪著的動作調小）
     reactions 說明：
       poke ：點臉。SET 另外可帶 "sequence_sec": [0.75, 1.0, 2.5]（連戳第 0/1/2 級各演多久，
              超過就停在最後一級）、"reset_after_sec": 2.0（隔多久沒戳就從頭）、
@@ -49,6 +50,7 @@ class AnimSet:
     native_facing: str
     duration: tuple  # (min, max) 秒，loop 的小動作才用
     weight: float
+    height_ratio: float = 1.0  # 這組顯示高度＝站立身高 × 這個比例（坐著、跪著的動作調小）
 
 
 @dataclass(frozen=True)
@@ -111,6 +113,7 @@ def _parse_set(name: str, raw: dict, base: Path):
             native_facing=facing,
             duration=_pair(raw.get("duration_sec"), DEFAULT_LOOP_DURATION),
             weight=max(0.0, float(raw.get("weight", 1))),
+            height_ratio=min(1.5, max(0.2, float(raw.get("height_ratio", 1)))),
         )
     except (KeyError, TypeError, ValueError) as exc:
         print(f"[anim] 略過動畫 {name!r}：{exc}")
