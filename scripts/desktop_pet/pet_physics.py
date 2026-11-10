@@ -20,8 +20,17 @@ from pet_config import (
 import desktop_physics
 
 
+LAND_MIN_FALL_SEC = 0.25  # 掉落至少這麼久，落地才算「摔到地上」（避免微小落差也觸發落地動作）
+
+
 class PhysicsMixin:
     """桌寵物理：重力落地、自主漫遊、依面向挑立繪。"""
+
+    _falling = False  # 目前是否在掉落中（動畫用）
+    _fall_since = 0.0
+
+    def _on_landed(self) -> None:
+        """掉落後落地的掛鉤，預設什麼都不做（pet_reactions 會覆寫來播落地動作）。"""
 
     # ============================================================
     # 桌寵物理（重力 / 落地，見 desktop_physics.py）
@@ -48,6 +57,7 @@ class PhysicsMixin:
 
             surface_y = desktop_physics.find_landing_y(x, x + w, y + h, self._hwnd)
             falling = y + h < surface_y - 1
+            self._update_fall_state(falling)
 
             if falling:
                 self._fall_velocity = min(
@@ -67,7 +77,20 @@ class PhysicsMixin:
                 self.root.geometry(f"+{int(new_x)}+{int(new_y)}")
                 self._position_input_popup()
 
+        else:
+            self._falling = False  # 被抓住或物理關閉：不算掉落
+
         self.root.after(PHYSICS_TICK_MS, self._physics_tick)
+
+    def _update_fall_state(self, falling: bool) -> None:
+        """維護 _falling；掉落 >= LAND_MIN_FALL_SEC 後落地時呼叫 _on_landed。"""
+        now = time.monotonic()
+        if falling and not self._falling:
+            self._fall_since = now
+        elif self._falling and not falling and now - self._fall_since >= LAND_MIN_FALL_SEC:
+            self._falling = False
+            self._on_landed()
+        self._falling = falling
 
     def _advance_wander(self, x: int, w: int, dt: float) -> float:
         """落地時偶爾隨機左右滑動一小段，讓角色感覺「活著」，不是釘死在原地。

@@ -20,7 +20,7 @@ WALK_GRACE_SEC = 0.15  # 最近這麼久內有水平移動就算「正在走」
 
 
 class AnimationMixin:
-    """立繪幀動畫（idle／walk／偶發小動作）。"""
+    """立繪幀動畫（idle／walk／偶發小動作／觸發式反應）。"""
 
     _anim_ctrl = None
     _anim_cfg = None
@@ -46,7 +46,8 @@ class AnimationMixin:
             self._anim_last = None
 
     def _anim_photo(self, key: str, idx: int):
-        aset = self._anim_cfg.states.get(key) or self._anim_cfg.occasional[key]
+        cfg = self._anim_cfg
+        aset = cfg.states.get(key) or cfg.reactions.get(key) or cfg.occasional[key]
         mirrored = needs_mirror(aset.native_facing, self._facing)
         ck = (self._avatar_width, key, mirrored)
         photos = self._anim_photos.get(ck)
@@ -61,7 +62,10 @@ class AnimationMixin:
             now = time.monotonic()
             talking = self._busy
             walking = now - self._walk_moved_at < WALK_GRACE_SEC
-            result = self._anim_ctrl.step(now, talking, walking, allow_occasional=self._input_popup is None)
+            result = self._anim_ctrl.step(
+                now, talking, walking, allow_occasional=self._input_popup is None,
+                dragging=self._mouse_down and self._dragged, falling=self._falling,
+            )
             if result is None:
                 if self._anim_last is not None:  # 剛開始說話：回到靜態立繪，嘴型換圖從這裡接手
                     self.avatar_label.configure(image=self._current_frame(is_open=False))

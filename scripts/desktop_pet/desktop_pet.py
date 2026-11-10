@@ -193,9 +193,11 @@ from pet_flow import ConversationFlowMixin  # noqa: E402
 from pet_bubble_window import BubbleMixin  # noqa: E402
 from pet_bubble_input import BubbleInputMixin  # noqa: E402
 from pet_anim_window import AnimationMixin  # noqa: E402
+from pet_reactions import ReactionMixin  # noqa: E402
 
 
 class CharacterWindow(
+    ReactionMixin,  # 要在 PhysicsMixin 前面（覆寫 _on_landed）
     PhysicsMixin,
     AvatarInteractionMixin,
     InputPopupMixin,

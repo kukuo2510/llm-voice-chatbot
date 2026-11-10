@@ -52,6 +52,8 @@ class AvatarInteractionMixin:
         self._fall_velocity = 0.0
 
         if not self._dragged:
+            if self._anim_ctrl is not None and self._try_poke(event.y):
+                return  # 點在臉上：戳一下，不開輸入列
             self._toggle_input_popup()
 
     def _on_avatar_right_click(self, event: tk.Event) -> None:
