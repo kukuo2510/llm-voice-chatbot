@@ -27,6 +27,8 @@ import web_lookup
 class ScreenWatchMixin:
     """螢幕讀取主動搭話：背景迴圈、開關、詢問視窗、主動搭話觸發、遊戲資料查詢。"""
 
+    _screen_look_running = False  # 一次「看螢幕」還在背景跑（避免重疊）
+
     # ============================================================
     # 螢幕讀取主動搭話（背景執行緒，詳見規劃文件 10.5）
     # ============================================================
@@ -57,7 +59,8 @@ class ScreenWatchMixin:
         while True:
             time.sleep(_TICK_SEC)
 
-            if not self._screen_watch_enabled:
+            if not self._screen_watch_enabled or self._screen_look_by_anim():
+                # 功能關閉，或改由閒置小動作抽籤觸發：計時這套不動作
                 last_check = time.monotonic()
                 pending = False
                 continue
@@ -76,13 +79,33 @@ class ScreenWatchMixin:
             last_check = time.monotonic()
             pending = False
 
+            self._do_screen_look()
+
+    def _screen_look_by_anim(self) -> bool:
+        """看螢幕是否改由動畫的閒置抽籤觸發（animations.json 有設 screen_look 才是）。"""
+        return (self._anim_ctrl is not None and self._anim_cfg is not None
+                and self._anim_cfg.screen_look_weight > 0)
+
+    def _start_screen_look(self) -> None:
+        """閒置抽籤抽中「看螢幕」（Tk 主執行緒呼叫）：現在不方便就略過，不補做。"""
+        if (not self._screen_watch_enabled or self._busy
+                or self._input_popup is not None or self._screen_look_running):
+            return
+        self._screen_look_running = True
+        threading.Thread(target=self._do_screen_look, daemon=True).start()
+
+    def _do_screen_look(self) -> None:
+        """截圖看一眼、組提示詞、交給主執行緒觸發主動搭話（在背景執行緒跑）。"""
+        self._screen_look_running = True
+        try:
             caption = look_at_screen()
             if not caption:
-                continue
-
+                return
             look = dict(screen_watch.last_look)
             prompt = _screen_watch_prompt(caption, look, self._game_info_for(look))
             self.root.after(0, lambda p=prompt: self._trigger_proactive(p))
+        finally:
+            self._screen_look_running = False
 
     def _on_game_mode_toggle(self) -> None:
         """右鍵選單「遊戲模式」：下一輪看螢幕就生效，並記住這次選擇。"""

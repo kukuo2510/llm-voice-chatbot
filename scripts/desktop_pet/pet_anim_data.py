@@ -10,6 +10,8 @@
       "states":   {"idle": SET, "walk": SET},   # idle 必填，walk 選填
       "occasional": {"drink-tea": SET, ...},    # 選填，閒置時隨機挑一個演
       "sequences": {"penguin-nap": {...}},      # 選填，多段式小動作，格式見 pet_anim_seq
+      "screen_look": {"weight": 1},             # 選填，閒置時「看螢幕主動搭話」也進抽籤池（不演動畫）；
+                                                # 沒寫、格式壞、負數都當 0（關閉，仍照固定計時）
       "reactions": {"poke": SET, "drag": SET,   # 選填，被觸發才演；四個各自選填
                     "fall": SET, "land": SET}
     }
@@ -67,6 +69,7 @@ class AnimConfig:
     poke_reset_sec: float = DEFAULT_POKE_RESET_SEC
     poke_cooldown_sec: float = DEFAULT_POKE_COOLDOWN_SEC
     sequences: dict = field(default_factory=dict)  # 多段式小動作（跟 occasional 共用挑選池）
+    screen_look_weight: float = 0.0  # 大於 0＝「看螢幕」進閒置抽籤池
 
     def set_for(self, key: str):
         """依 key 找對應的幀組；多段動作的 key 是 "<名稱>#<段序>"。找不到丟 KeyError。"""
@@ -185,6 +188,17 @@ def _parse_reactions(raw, base: Path):
     return reactions, poke
 
 
+def _parse_screen_look(raw) -> float:
+    """解析 screen_look 區塊的 weight；沒寫、格式壞、負數都回傳 0。"""
+    if raw is None:
+        return 0.0
+    try:
+        return max(0.0, float(raw["weight"]))
+    except (KeyError, TypeError, ValueError):
+        print("[anim] 略過 screen_look：格式不對")
+        return 0.0
+
+
 def load_animations(avatar_dir: Path):
     """回傳 AnimConfig；沒有 animations.json、檔案壞掉、或缺 idle 時回傳 None。"""
     path = Path(avatar_dir) / "animations.json"
@@ -228,5 +242,6 @@ def load_animations(avatar_dir: Path):
             set(states) | set(occasional) | set(reactions) | set(raw_occ) | set(REACTION_NAMES),
             lambda key, raw: _parse_set(key, raw, Path(avatar_dir)),
         ),
+        screen_look_weight=_parse_screen_look(data.get("screen_look")),
         **poke,
     )

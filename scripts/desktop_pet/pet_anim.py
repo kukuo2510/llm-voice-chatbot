@@ -6,6 +6,8 @@
 觸發式反應（config.reactions，選填）：dragging 演 drag、falling 演 fall（兩者持續到條件消失）；
 poke(now)／land(now) 啟動一次性動作，演到結束時間才回 idle。
 優先順序：talking > dragging > falling > 進行中的 poke/land > walking > 小動作/idle。
+「看螢幕」（config.screen_look_weight > 0 且 step 傳 allow_screen_look）也進同一個抽籤池，
+抽中時維持 idle、不演動畫，只留事件給 pop_event() 取走。
 多段式小動作（config.sequences）跟 occasional 共用挑選池；演的期間 key 是 "<名稱>#<段序>"，
 talking／dragging／falling／walking 都會取消它；點擊可喚醒（wake_click）；演的期間 resting 為真。
 注意：反應的 key 就是 "poke"/"drag"/"fall"/"land"，小動作不要取同樣的名字。
@@ -13,6 +15,7 @@ talking／dragging／falling／walking 都會取消它；點擊可喚醒（wake_
 
 import random
 
+SCREEN_LOOK = "screen-look"  # 虛擬籤名（不是動畫 key）：抽中時維持 idle，只發出「看螢幕」事件
 AFTER_TALK_SEC = 4.0  # 講完話至少隔這麼久才演小動作
 
 from pet_anim_seq import SequenceRun
@@ -29,6 +32,7 @@ class AnimController:
         self._poke_last = None  # 上一次被接受的戳的時間
         self._poke_level = -1
         self._seq = None  # 進行中的 SequenceRun
+        self._event = None  # 待處理事件（目前只有 SCREEN_LOOK），pop_event() 取走
 
     def _schedule_next(self, now: float) -> None:
         lo, hi = self.config.interval
@@ -88,14 +92,23 @@ class AnimController:
         self._enter("land", now)
         self._end = now + len(aset.frames) / aset.fps
 
-    def _pick_occasional(self) -> str:
+    def pop_event(self):
+        """回傳待處理事件（"screen-look" 或 None）並清掉。"""
+        event, self._event = self._event, None
+        return event
+
+    def _pick_occasional(self, screen_look: bool = False) -> str:
         pool = {**self.config.occasional, **self.config.sequences}
         names = list(pool)
         weights = [pool[n].weight for n in names]
+        if screen_look:
+            names.append(SCREEN_LOOK)
+            weights.append(self.config.screen_look_weight)
         return self.rng.choices(names, weights=weights, k=1)[0]
 
     def step(self, now: float, talking: bool, walking: bool, allow_occasional: bool = True,
-             dragging: bool = False, falling: bool = False):
+             dragging: bool = False, falling: bool = False,
+             allow_screen_look: bool = False):
         """推進狀態機，回傳 (key, frame_index)；說話中回傳 None。"""
         if self._start is None:
             self._enter("idle", now)
@@ -150,10 +163,15 @@ class AnimController:
             if self.key == "walk":
                 self._enter("idle", now)
                 self._schedule_next(now)
+            look = allow_screen_look and self.config.screen_look_weight > 0
             if (self.key == "idle" and allow_occasional
-                    and (self.config.occasional or self.config.sequences)
+                    and (self.config.occasional or self.config.sequences or look)
                     and now >= self._next_occ):
-                name = self._pick_occasional()
+                name = self._pick_occasional(look)
+                if name == SCREEN_LOOK:  # 不演動畫，維持 idle，只留一個事件給外面處理
+                    self._event = SCREEN_LOOK
+                    self._schedule_next(now)
+                    return self.key, self.frame_index(now)
                 if name in self.config.sequences:
                     self._seq = SequenceRun(self.config.sequences[name], now, self.rng)
                     self.key, self._start, self._end = self._seq.key, now, None

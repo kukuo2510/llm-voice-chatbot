@@ -9,7 +9,7 @@ import time
 
 from PIL import ImageTk
 
-from pet_anim import AnimController
+from pet_anim import SCREEN_LOOK, AnimController
 from pet_anim_data import load_animations
 from pet_anim_frames import build_set, colorkey_rgb, needs_mirror
 from pet_anim_fx import IDENTITY, apply_fx, fx_for
@@ -89,7 +89,10 @@ class AnimationMixin:
             result = self._anim_ctrl.step(
                 now, talking, walking, allow_occasional=self._input_popup is None,
                 dragging=self._mouse_down and self._dragged, falling=self._falling,
+                allow_screen_look=self._screen_watch_enabled,
             )
+            if self._anim_ctrl.pop_event() == SCREEN_LOOK:
+                self._start_screen_look()
             if result is None:
                 if self._anim_last is not None:  # 剛開始說話：回到靜態立繪，嘴型換圖從這裡接手
                     self.avatar_label.configure(image=self._current_frame(is_open=False))
