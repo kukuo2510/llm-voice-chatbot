@@ -383,6 +383,7 @@ class CharacterWindow(
     def _on_close(self) -> None:
         """關閉程式：停止全域熱鍵監聽、收掉輸入列與歷史紀錄視窗，再關閉主視窗。"""
         self._ptt_listener.stop()
+        self._music_shutdown()
         self._hide_input_popup()
         if self._history_window is not None:
             self._history_window.destroy()

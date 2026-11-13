@@ -6,11 +6,13 @@
 import tkinter as tk
 
 import chat
+from pet_music import MusicMixin
+from pet_work import WorkMixin
 from pet_config import (COLOR_ACCENT, COLOR_PANEL, COLOR_TEXT,
                         SPEECH_LANGUAGE_PRESETS)
 
 
-class MenuMixin:
+class MenuMixin(WorkMixin, MusicMixin):
     """右鍵選單。"""
 
     def _build_context_menu(self) -> None:
@@ -114,6 +116,8 @@ class MenuMixin:
             command=self._on_chunked_tts_toggle,
         )
         self._context_menu.add_command(label="清除對話記憶", command=self._on_clear_memory)
+        self._build_work_menu(self._context_menu)
+        self._build_music_menu(self._context_menu)
 
         self._context_menu.add_separator()
         self._context_menu.add_command(label="結束", command=self._on_close)
