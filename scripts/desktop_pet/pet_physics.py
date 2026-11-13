@@ -18,6 +18,7 @@ from pet_config import (
     WANDER_SPEED_PX_S,
 )
 import desktop_physics
+from pet_edge import plan_edge, step_toward
 
 
 LAND_MIN_FALL_SEC = 0.25  # 掉落至少這麼久，落地才算「摔到地上」（避免微小落差也觸發落地動作）
@@ -32,6 +33,7 @@ class PhysicsMixin:
     """桌寵物理：重力落地、自主漫遊、依面向挑立繪。"""
 
     _falling = False  # 目前是否在掉落中（動畫用）
+    _support_span = (0, 0)  # 目前支撐物的 (左端 x, 右端 x)，邊緣走位用
     _fall_since = 0.0
 
     def _on_landed(self) -> None:
@@ -60,8 +62,12 @@ class PhysicsMixin:
             w = self.root.winfo_width()
             h = self.root.winfo_height()
 
-            surface_y = desktop_physics.find_landing_y(x, x + w, y + h, self._hwnd)
-            falling = y + h < surface_y - 1
+            # 演坐姿等 anchor_y 的段時，視窗要沉到「支撐線」對齊落腳面，視窗底部會低於落腳面 sink 像素
+            sink = self._anim_sink()
+            foot = y + h - sink  # 找落腳面也要用「扣掉下沉量」的底部，不然會把自己坐著的那個視窗當成已經卡進去
+            surface_y, support_left, support_right = desktop_physics.find_support(x, x + w, foot, self._hwnd)
+            self._support_span = (support_left, support_right)
+            falling = foot < surface_y - 1
             self._update_fall_state(falling)
 
             if falling:
@@ -69,11 +75,11 @@ class PhysicsMixin:
                     self._fall_velocity + GRAVITY_PX_S2 * dt,
                     FALL_TERMINAL_VELOCITY_PX_S,
                 )
-                new_y = min(y + self._fall_velocity * dt, surface_y - h)
+                new_y = min(y + self._fall_velocity * dt, surface_y + sink - h)
                 new_x = x
             else:
                 self._fall_velocity = 0.0
-                new_y = surface_y - h
+                new_y = surface_y + sink - h
                 new_x = self._advance_wander(x, w, dt)
                 if new_x != x:
                     self._walk_moved_at = time.monotonic()  # 給走路動畫判斷「真的在水平移動」
@@ -109,6 +115,8 @@ class PhysicsMixin:
         ctrl = getattr(self, "_anim_ctrl", None)
         if wander_paused(self._busy, self._input_popup is not None, ctrl is not None and ctrl.resting):
             return x
+        if ctrl is not None and ctrl.pending_edge is not None:
+            return self._walk_to_edge(ctrl, x, w, dt)
 
         if self._walk_seconds_left > 0:
             self._walk_seconds_left -= dt
@@ -126,6 +134,19 @@ class PhysicsMixin:
             self._start_wander()
 
         return x
+
+    def _walk_to_edge(self, ctrl, x: int, w: int, dt: float) -> float:
+        """placement "edge" 的多段動作抽中後：走到目前支撐物最近的左／右端，面向外側，到了通知控制器開演。"""
+        self._walk_seconds_left = 0.0  # 這段期間不做隨機漫遊
+        left, right = self._support_span
+        target, facing = plan_edge(x, w, left, right, self.root.winfo_screenwidth())
+        new_x, arrived = step_toward(x, target, WANDER_SPEED_PX_S * dt)
+        if arrived:
+            self._facing = facing  # 面向外側（腳垂在邊緣外）
+            ctrl.edge_arrived()
+        elif new_x != x:
+            self._facing = "right" if new_x > x else "left"
+        return new_x
 
     def _start_wander(self) -> None:
         """開始新的一輪自主漫遊：隨機決定方向與持續時間，並排定下一次漫遊的時間。"""

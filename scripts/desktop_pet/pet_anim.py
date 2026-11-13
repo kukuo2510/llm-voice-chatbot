@@ -10,21 +10,36 @@ poke(now)／land(now) 啟動一次性動作，演到結束時間才回 idle。
 抽中時維持 idle、不演動畫，只留事件給 pop_event() 取走。
 多段式小動作（config.sequences）跟 occasional 共用挑選池；演的期間 key 是 "<名稱>#<段序>"，
 talking／dragging／falling／walking 都會取消它；點擊可喚醒（wake_click）；演的期間 resting 為真。
+進階欄位（hours／after_idle_sec／sleeping／until／placement／weight 0＋start()）見 pet_anim_seq 與 pet_anim_api。
 注意：反應的 key 就是 "poke"/"drag"/"fall"/"land"，小動作不要取同樣的名字。
 """
 
 import random
+import time
+from datetime import datetime
 
 SCREEN_LOOK = "screen-look"  # 虛擬籤名（不是動畫 key）：抽中時維持 idle，只發出「看螢幕」事件
 AFTER_TALK_SEC = 4.0  # 講完話至少隔這麼久才演小動作
 
-from pet_anim_seq import SequenceRun
+from pet_anim_api import SequenceApiMixin
+from pet_timeofday import in_hours
 
 
-class AnimController:
-    def __init__(self, config, rng=None):
+class AnimController(SequenceApiMixin):
+    def __init__(self, config, rng=None, clock=None, mono=None):
+        """clock：回傳目前本機時間 datetime（判斷 hours 用）；mono：回傳單調時間秒（start／stop 沒傳 now 時用）。"""
         self.config = config
         self.rng = rng or random
+        self._clock = clock or datetime.now
+        self._mono = mono or time.monotonic
+        self._last_interact = None  # 最後一次使用者互動的時間（第一次 step 時以當下起算）
+        self._talking = False  # 上一次 step 是否在說話
+        self._pending = None  # 正在走向邊緣、等著開演的多段動作名稱
+        self._pending_since = 0.0
+        self._pending_forced = False
+        self._at_edge = False
+        self._queued = None  # 說話中收到的 start()，講完才開始
+        self._ignore_walk_until = -1e9
         self.key = "idle"
         self._start = None
         self._end = None  # 小動作的結束時間
@@ -60,6 +75,7 @@ class AnimController:
         """點擊喚醒：在醒來那段之前才有效，回傳 True 代表吞掉這次點擊。"""
         if self._seq is None or not self._seq.wake(now):
             return False
+        self._last_interact = now
         self.key, self._start, self._end = self._seq.key, now, None
         return True
 
@@ -80,6 +96,8 @@ class AnimController:
         else:
             level = min(self._poke_level + 1, len(cfg.poke_sequence) - 1)  # 超過就停在最後一級
         self._poke_last, self._poke_level = now, level
+        self._last_interact = now
+        self._clear_pending()
         self._enter("poke", now)  # 會取消進行中的小動作
         self._end = now + cfg.poke_sequence[min(level, len(cfg.poke_sequence) - 1)]
         return level
@@ -97,13 +115,14 @@ class AnimController:
         event, self._event = self._event, None
         return event
 
-    def _pick_occasional(self, screen_look: bool = False) -> str:
-        pool = {**self.config.occasional, **self.config.sequences}
-        names = list(pool)
-        weights = [pool[n].weight for n in names]
+    def _pick_occasional(self, screen_look: bool = False, now: float = 0.0):
+        """從符合條件的小動作／多段動作（加上「看螢幕」）抽一個；池子是空的回傳 None。"""
+        names, weights = self._pick_pool(now)
         if screen_look:
             names.append(SCREEN_LOOK)
             weights.append(self.config.screen_look_weight)
+        if not names:
+            return None
         return self.rng.choices(names, weights=weights, k=1)[0]
 
     def step(self, now: float, talking: bool, walking: bool, allow_occasional: bool = True,
@@ -114,9 +133,14 @@ class AnimController:
             self._enter("idle", now)
             if self._next_occ is None:  # 只有第一次才排；講完話回來沿用原本的排程
                 self._schedule_next(now)
+        if self._last_interact is None or not allow_occasional:  # 輸入列開著也算互動
+            self._last_interact = now
+        self._talking = talking
 
         if talking:
+            self._last_interact = now
             self._seq = None
+            self._pending = None  # 說話取消走位；排隊中的 start() 留著，講完再演
             if self.key != "idle":
                 self._enter("idle", now)
             # 講完話不要馬上跳小動作，但也不要整個重排：她常講話，重排的話小動作幾乎輪不到
@@ -126,6 +150,9 @@ class AnimController:
             return None
 
         if dragging or falling:
+            if dragging:
+                self._last_interact = now
+            self._clear_pending()
             self._cancel_seq(now)
         reactions = self.config.reactions
         for flag, name in ((dragging, "drag"), (falling, "fall")):
@@ -140,10 +167,11 @@ class AnimController:
                 return self.key, self.frame_index(now)
             self._leave_to_idle(now)
 
+        self._service_requests(now)
         if self._seq is not None:
-            if walking:
+            if walking and now >= self._ignore_walk_until:
                 self._cancel_seq(now)  # 回 idle，下面的走路判斷接手
-            elif self._seq.advance(now):
+            elif self._seq.advance(now, in_hours(self._seq.sdef.hours, self._clock())):
                 if self.key != self._seq.key:
                     self.key, self._start = self._seq.key, self._seq.start
                 return self.key, self.frame_index(now)
@@ -164,24 +192,28 @@ class AnimController:
                 self._enter("idle", now)
                 self._schedule_next(now)
             look = allow_screen_look and self.config.screen_look_weight > 0
-            if (self.key == "idle" and allow_occasional
+            if (self.key == "idle" and allow_occasional and self._pending is None
                     and (self.config.occasional or self.config.sequences or look)
                     and now >= self._next_occ):
-                name = self._pick_occasional(look)
-                if name == SCREEN_LOOK:  # 不演動畫，維持 idle，只留一個事件給外面處理
+                name = self._pick_occasional(look, now)
+                if name is None:  # 現在沒有符合條件的（時段、閒置時間…）：下次再抽
+                    self._schedule_next(now)
+                elif name == SCREEN_LOOK:  # 不演動畫，維持 idle，只留一個事件給外面處理
                     self._event = SCREEN_LOOK
                     self._schedule_next(now)
                     return self.key, self.frame_index(now)
-                if name in self.config.sequences:
-                    self._seq = SequenceRun(self.config.sequences[name], now, self.rng)
-                    self.key, self._start, self._end = self._seq.key, now, None
+                elif name in self.config.sequences:
+                    self._launch(name, now, False)  # placement edge 的先進入走位待命
+                    if self._pending is not None:
+                        self._schedule_next(now)  # 走位被取消或逾時後不要立刻又抽
                     return self.key, self.frame_index(now)
-                self._enter(name, now)
-                aset = self.config.occasional[name]
-                if aset.loop:
-                    self._end = now + self.rng.uniform(*aset.duration)
                 else:
-                    self._end = now + len(aset.frames) / aset.fps
+                    self._enter(name, now)
+                    aset = self.config.occasional[name]
+                    if aset.loop:
+                        self._end = now + self.rng.uniform(*aset.duration)
+                    else:
+                        self._end = now + len(aset.frames) / aset.fps
 
         return self.key, self.frame_index(now)
 

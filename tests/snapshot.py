@@ -481,9 +481,9 @@ def worker(mode):
         case("right_click", lambda: win._on_avatar_right_click(ev))
         case("scroll_up_down_apply", lambda: (win._on_avatar_scroll(ev), win._on_avatar_scroll(ev_down),
                                               win._on_avatar_scroll(ev_down), win._apply_avatar_resize(), win._apply_avatar_resize()))
-        with mock.patch.object(desktop_physics, "find_landing_y", lambda *a: 5000):
+        with mock.patch.object(desktop_physics, "find_support", lambda *a: (5000, 0, 1920)):
             case("physics_falling", lambda: (win._physics_tick(), win._physics_tick(), win._fall_velocity))
-        with mock.patch.object(desktop_physics, "find_landing_y", lambda *a: 600):
+        with mock.patch.object(desktop_physics, "find_support", lambda *a: (600, 0, 1920)):
             case("physics_landed_wander", lambda: (win._physics_tick(), win._start_wander(),
                                                    win._advance_wander(100, 280, 0.033), win._advance_wander(100, 280, 0.033)))
         with mock.patch("time.monotonic", lambda: 99999.0):

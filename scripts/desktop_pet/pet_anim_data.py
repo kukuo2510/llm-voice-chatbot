@@ -20,7 +20,8 @@
            "duration_sec": [4.5, 7.5],           # 只有 loop 的小動作用：演多久
            "weight": 1,                          # 小動作被挑中的權重
            "height_ratio": 1.0,                  # 選填：顯示高度比例（坐著、跪著的動作調小）
-           "wide": false}                        # 選填：寬場景，演的時候視窗暫時變寬
+           "wide": false,                        # 選填：寬場景，演的時候視窗暫時變寬
+           "hours": [23, 7]}                     # 選填（小動作）：只有這個時段才抽得到，可跨午夜
     reactions 說明：
       poke ：點臉。SET 另外可帶 "sequence_sec": [0.75, 1.0, 2.5]（連戳第 0/1/2 級各演多久，
              超過就停在最後一級）、"reset_after_sec": 2.0（隔多久沒戳就從頭）、
@@ -34,6 +35,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from pet_anim_seq import parse_sequences
+from pet_timeofday import parse_hours
 
 DEFAULT_INTERVAL = (20.0, 60.0)
 DEFAULT_LOOP_DURATION = (4.0, 7.0)
@@ -56,6 +58,7 @@ class AnimSet:
     height_ratio: float = 1.0  # 這組顯示高度＝站立身高 × 這個比例（坐著、跪著的動作調小）
     wide: bool = False  # 寬場景（例如連沙發一起）：演的時候視窗暫時變寬，不縮小角色
     norm_frames: tuple = ()  # 縮放基準用的幀（空＝用自己的 frames）；多段動作 shared_scale 時由 pet_anim_seq 填入
+    hours: tuple = None  # (開始時, 結束時)：只有本機時間在範圍內才進抽籤池（小動作用；見 pet_timeofday）
 
 
 @dataclass(frozen=True)
@@ -132,6 +135,7 @@ def _parse_set(name: str, raw: dict, base: Path):
             height_ratio=min(1.5, max(0.2, float(raw.get("height_ratio", 1)))),
             wide=bool(raw.get("wide", False)),
             norm_frames=tuple(_resolve(base, f) for f in raw.get("norm_frames", ())),
+            hours=parse_hours(raw.get("hours")),
         )
     except (KeyError, TypeError, ValueError) as exc:
         print(f"[anim] 略過動畫 {name!r}：{exc}")

@@ -14,6 +14,7 @@ from pet_anim_data import load_animations
 from pet_anim_frames import build_set, colorkey_rgb, needs_mirror
 from pet_anim_fx import IDENTITY, apply_fx, fx_for
 from pet_config import ASSETS_DIR
+from pet_sink import content_height, sink_px
 import livliv_link
 
 ANIM_TICK_MS = 40  # 約 25fps 的檢查頻率，實際換幀依各組的 fps
@@ -58,6 +59,26 @@ class AnimationMixin:
             frames = build_set(aset, ASSETS_DIR, self._avatar_width, mirrored)
             self._anim_photos[ck] = frames
         return ck, frames
+
+    def _pet_sleeping(self) -> bool:
+        """正在演「睡覺」類動作（sleeping）：主動搭話與 Claude 通知要略過，不排隊補講。"""
+        ctrl = self._anim_ctrl
+        return ctrl is not None and ctrl.is_sleeping
+
+    def _anim_sink(self) -> int:
+        """目前這段 anchor_y 要讓視窗往下沉幾像素（沒有就 0；見 pet_sink）。給物理 tick 用。"""
+        ctrl = self._anim_ctrl
+        if ctrl is None or self._anim_photos is None:
+            return 0
+        anchor = ctrl.anchor_y
+        if anchor is None:
+            return 0
+        ck, frames = self._anim_frames(ctrl.key)
+        sk = ("sink", *ck)
+        height = self._anim_photos.get(sk)
+        if height is None:
+            height = self._anim_photos[sk] = content_height(frames)
+        return sink_px(anchor, height)
 
     def _anim_photo(self, key: str, idx: int, fx=IDENTITY):
         """取得要顯示的 PhotoImage：幀 idx 套上變形 fx（見 pet_anim_fx）。"""

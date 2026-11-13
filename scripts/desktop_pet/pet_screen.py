@@ -59,8 +59,8 @@ class ScreenWatchMixin:
         while True:
             time.sleep(_TICK_SEC)
 
-            if not self._screen_watch_enabled or self._screen_look_by_anim():
-                # 功能關閉，或改由閒置小動作抽籤觸發：計時這套不動作
+            if not self._screen_watch_enabled or self._screen_look_by_anim() or self._pet_sleeping():
+                # 功能關閉、改由閒置小動作抽籤觸發、或她在睡覺：計時這套不動作（睡覺中不欠著，醒來不補講）
                 last_check = time.monotonic()
                 pending = False
                 continue
@@ -88,7 +88,7 @@ class ScreenWatchMixin:
 
     def _start_screen_look(self) -> None:
         """閒置抽籤抽中「看螢幕」（Tk 主執行緒呼叫）：現在不方便就略過，不補做。"""
-        if (not self._screen_watch_enabled or self._busy
+        if (not self._screen_watch_enabled or self._busy or self._pet_sleeping()
                 or self._input_popup is not None or self._screen_look_running):
             return
         self._screen_look_running = True
@@ -211,7 +211,7 @@ class ScreenWatchMixin:
         唯一差別是不會記一筆「你：...」的歷史紀錄——因為這句話不是
         使用者真的打的字，而是螢幕讀取觸發出來的內部提示詞。
         """
-        if self._busy:
+        if self._busy or self._pet_sleeping():  # 睡覺中不搭話（看螢幕、Claude 通知都走這裡），也不排隊補講
             return
 
         self._busy = True

@@ -34,15 +34,20 @@ _SPI_GETWORKAREA = 0x0030
 _MIN_SURFACE_WIDTH = 60
 
 
+def work_area() -> tuple[int, int, int, int]:
+    """回傳可用桌面（扣掉工作列）的 (left, top, right, bottom)。"""
+    rect = wintypes.RECT()
+    ctypes.windll.user32.SystemParametersInfoW(_SPI_GETWORKAREA, 0, ctypes.byref(rect), 0)
+    return rect.left, rect.top, rect.right, rect.bottom
+
+
 def work_area_bottom() -> int:
     """回傳工作列上緣的 y 座標（也就是可用桌面高度的下緣）。
 
     這個值當作「最終地板」使用——就算找不到任何其他視窗可以站，
     也一定會有這個當作最底層的落腳點，桌寵不會無止盡往下掉出螢幕。
     """
-    rect = wintypes.RECT()
-    ctypes.windll.user32.SystemParametersInfoW(_SPI_GETWORKAREA, 0, ctypes.byref(rect), 0)
-    return rect.bottom
+    return work_area()[3]
 
 
 def _visible_window_rects(exclude_hwnd: Optional[int]) -> list[tuple[int, int, int, int]]:
@@ -77,15 +82,18 @@ def _visible_window_rects(exclude_hwnd: Optional[int]) -> list[tuple[int, int, i
     return rects
 
 
-def find_landing_y(
+def find_support(
     char_left: int,
     char_right: int,
     char_bottom: int,
     exclude_hwnd: Optional[int],
-) -> int:
-    """找出角色目前這個 x 範圍，正下方最近的落腳面 y 座標。
+) -> tuple[int, int, int]:
+    """找出角色目前這個 x 範圍，正下方最近的支撐物：回傳 (落腳面 y, 支撐物左端 x, 支撐物右端 x)。
 
-    回傳值代表「角色底部應該貼齊的 y 座標」。
+    支撐物是某個視窗時，左右端就是該視窗的左右邊；是工作區地面時就是螢幕工作區的左右端。
+    （給「邊緣坐下」找最近的邊緣用；只要落腳 y 的話用 find_landing_y。）
+
+    落腳面 y 代表「角色底部應該貼齊的 y 座標」。
 
     候選落點的篩選規則：
     - x 範圍要跟角色目前的左右範圍有重疊（否則不算「正下方」）。
@@ -98,7 +106,8 @@ def find_landing_y(
     如果完全沒有符合條件的視窗可以當落點，就回退到工作列上緣
     （也就是 work_area_bottom() 這個最終地板）。
     """
-    best = work_area_bottom()
+    wl, _wt, wr, wb = work_area()
+    best = (wb, wl, wr)
 
     for left, top, right, _bottom in _visible_window_rects(exclude_hwnd):
         if not (left < char_right and right > char_left):
@@ -108,7 +117,17 @@ def find_landing_y(
             # 頂邊已經在角色目前底部的上方，代表角色其實卡在裡面了，
             # 不應該把這個視窗當成落點。
             continue
-        if top < best:
-            best = top
+        if top < best[0]:
+            best = (top, left, right)
 
     return best
+
+
+def find_landing_y(
+    char_left: int,
+    char_right: int,
+    char_bottom: int,
+    exclude_hwnd: Optional[int],
+) -> int:
+    """只要落腳面 y 的簡便版（判定規則見 find_support）。"""
+    return find_support(char_left, char_right, char_bottom, exclude_hwnd)[0]

@@ -34,6 +34,8 @@ class ClaudeEventMixin:
 
     def _on_claude_event(self, event: dict, tries: int = 0) -> None:
         """角色有空就讓她講一句；正在講話的話稍後再試，等太久就放棄。"""
+        if self._pet_sleeping():  # 睡覺中的通知直接丟掉，不排隊補講
+            return
         if self._busy:
             if tries < CLAUDE_EVENT_MAX_TRIES:
                 self.root.after(CLAUDE_EVENT_RETRY_MS, lambda: self._on_claude_event(event, tries + 1))
