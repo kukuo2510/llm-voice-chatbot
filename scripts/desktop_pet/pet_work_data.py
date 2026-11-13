@@ -17,7 +17,7 @@ WORK_SEQUENCE_NAMES = frozenset(WORK_SEQUENCES.values())
 STOCK_SEQUENCE = "stock"
 
 # 股票：三支虛構股票（純動畫，不計錢）。
-STOCK_NAMES = ("豐川集團", "月之森科技", "RiNG 娛樂")
+STOCK_NAMES = ("晨星集團", "月光科技", "海音娛樂")
 
 # 結果 sequence 與抽中的權重（賺 45%、賠 55%，大賺大賠都偏少）。
 STOCK_OUTCOMES = (

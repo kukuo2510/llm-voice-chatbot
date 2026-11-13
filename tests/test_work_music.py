@@ -152,7 +152,7 @@ class WorkMixinTests(unittest.TestCase):
             op.assert_called_once()
             on_choose = op.call_args.args[2]
         self.assertIs(w._stock_picker, picker)
-        on_choose("豐川集團")
+        on_choose("晨星集團")
         self.assertIsNone(w._stock_picker)
         self.assertEqual(ctrl.calls[0], ("start", "stock"))
         self.assertEqual(ctrl.calls[1], ("stop", "stock"))
